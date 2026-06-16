@@ -1,0 +1,6 @@
+{
+  "name": "Calendar Task Tracker",
+  "description": "Daily, monthly, and yearly calendar tracker with real-time Google Cloud backup and multi-device synchronization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

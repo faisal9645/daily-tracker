@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account settings and metadata.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The unique ID matching request.auth.uid"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the profile was created"
+        }
+      },
+      "required": [
+        "userId",
+        "email",
+        "createdAt"
+      ]
+    },
+    "Task": {
+      "title": "User Task",
+      "description": "A planning task assigned to a user.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The direct title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description of the task"
+        },
+        "date": {
+          "type": "string",
+          "description": "YYYY-MM-DD date representation"
+        },
+        "time": {
+          "type": "string",
+          "description": "Optional HH:MM time representation"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Completion status"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "description": "Task priority level"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category tag"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Optional duration in minutes"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": [
+        "title",
+        "date",
+        "completed",
+        "priority",
+        "category"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Information about a user"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Collection of tasks for a specific user"
+    }
+  }
+}
