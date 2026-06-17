@@ -4,4 +4,6 @@
     <string name="title_activity_main">Planflow</string>
     <string name="package_name">com.planflow.dailytracker</string>
     <string name="custom_url_scheme">com.planflow.dailytracker</string>
+    <!-- Web OAuth client ID from Firebase (required for Google Sign-In on Android) -->
+    <string name="default_web_client_id">79791798391-jckqlume88fvs51r6cr3vr6sbllnkqss.apps.googleusercontent.com</string>
 </resources>

@@ -405,9 +405,23 @@ export default function App() {
     try {
       await signInWithGoogle();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Google sign-in failed.';
+      const rawMessage = err instanceof Error ? err.message : 'Google sign-in failed.';
       console.error('Auth sign-in error:', err);
-      setAuthError(message);
+
+      const lower = rawMessage.toLowerCase();
+      if (
+        lower.includes('no credential') ||
+        (lower.includes('credential') && lower.includes('available')) ||
+        lower.includes('id token') ||
+        lower.includes('12500') ||
+        lower.includes('10:')
+      ) {
+        setAuthError(
+          'Google sign-in is not configured for this Android build yet. In Firebase Console, add your app SHA-1 fingerprint, download a new google-services.json, replace android/app/google-services.json, then rebuild the APK. Run: npm run android:sha',
+        );
+      } else {
+        setAuthError(rawMessage);
+      }
     } finally {
       setSignInLoading(false);
     }

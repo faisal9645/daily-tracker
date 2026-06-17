@@ -104,11 +104,21 @@ export async function ensureGoogleProfilePhoto(user: User): Promise<User> {
 
 export async function signInWithGoogle(): Promise<UserCredential> {
   if (isNativeApp) {
-    const result = await FirebaseAuthentication.signInWithGoogle();
+    let result;
+
+    try {
+      result = await FirebaseAuthentication.signInWithGoogle();
+    } catch (credentialManagerError) {
+      console.warn('Credential Manager Google sign-in failed, retrying with account picker:', credentialManagerError);
+      result = await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
+    }
+
     const idToken = result.credential?.idToken;
 
     if (!idToken) {
-      throw new Error('Google sign-in did not return an ID token.');
+      throw new Error(
+        'Google sign-in did not return an ID token. Add your Android SHA-1 fingerprint in Firebase Console, download a new google-services.json, rebuild the APK, then try again.',
+      );
     }
 
     const credential = GoogleAuthProvider.credential(idToken);
