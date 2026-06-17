@@ -44,6 +44,7 @@ import {
 } from './services/notifications';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 const isNativeApp = Capacitor.isNativePlatform();
 
@@ -114,6 +115,16 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
     localStorage.setItem('planflow_dark_mode', String(darkMode));
+
+    // Sync Capacitor native status bar styling with the theme
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: darkMode ? Style.Dark : Style.Light })
+        .catch((err) => console.warn('Failed to set StatusBar style:', err));
+      
+      // Use dark background (#131317) for dark mode and light background (#fdfbff) for light mode
+      StatusBar.setBackgroundColor({ color: darkMode ? '#131317' : '#fdfbff' })
+        .catch((err) => console.warn('Failed to set StatusBar background color:', err));
+    }
   }, [darkMode]);
 
   // Update Status Bar Time

@@ -55,6 +55,7 @@
     "@capacitor/app": "^7.1.2",
     "@capacitor/core": "^7.6.0",
     "@capacitor/local-notifications": "^7.0.6",
+    "@capacitor/status-bar": "^7.0.6",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
