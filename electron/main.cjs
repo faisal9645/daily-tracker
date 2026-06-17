@@ -1,5 +1,16 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+function getIconPath() {
+  const packagedIcon = path.join(process.resourcesPath, 'icon.ico');
+  if (app.isPackaged && fs.existsSync(packagedIcon)) {
+    return packagedIcon;
+  }
+
+  const devIcon = path.join(__dirname, '../build/icon.ico');
+  return fs.existsSync(devIcon) ? devIcon : undefined;
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -8,6 +19,7 @@ function createWindow() {
     minWidth: 360,
     minHeight: 640,
     title: 'Planflow',
+    icon: getIconPath(),
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,

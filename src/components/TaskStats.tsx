@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Task } from '../types';
 import { getTaskStatistics, formatDateString, DEFAULT_CATEGORIES } from '../utils';
-import { 
-  CheckCircle2, 
-  Circle, 
-  Flame, 
-  TrendingUp, 
-  CalendarDays, 
+import {
+  CheckCircle2,
+  Circle,
+  Flame,
+  TrendingUp,
+  CalendarDays,
   Award,
   Target,
   BarChart3,
@@ -14,9 +14,10 @@ import {
   ChevronRight,
   Info,
   Calendar,
-  Percent
+  Percent,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import TaskIcon from './TaskIcon';
 
 interface TaskStatsProps {
   tasks: Task[];
@@ -132,9 +133,9 @@ export default function TaskStats({ tasks, onQuickFilterClick, activeFilter = 'a
   };
 
   return (
-    <div className="flex flex-col gap-6 mb-6">
+    <div className="flex flex-col gap-4 sm:gap-6 mb-4 sm:mb-6">
       {/* 4 Standard Global Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Total Tasks Card */}
         <motion.div
           id="stat-card-total"
@@ -143,7 +144,7 @@ export default function TaskStats({ tasks, onQuickFilterClick, activeFilter = 'a
           initial="hidden"
           animate="visible"
           whileHover={{ y: -2, transition: { duration: 0.2 } }}
-          className={`p-4 rounded-xl sm:rounded-2xl cursor-pointer border transition-all duration-200 ${
+          className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl cursor-pointer border transition-all duration-200 ${
             activeFilter === 'all'
               ? 'bg-blue-50 border-blue-300 shadow-sm shadow-blue-100 text-blue-950'
               : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50/50 text-slate-700'
@@ -172,7 +173,7 @@ export default function TaskStats({ tasks, onQuickFilterClick, activeFilter = 'a
           initial="hidden"
           animate="visible"
           whileHover={{ y: -2, transition: { duration: 0.2 } }}
-          className={`p-4 rounded-xl sm:rounded-2xl cursor-pointer border transition-all duration-200 ${
+          className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl cursor-pointer border transition-all duration-200 ${
             activeFilter === 'completed'
               ? 'bg-emerald-50 border-emerald-300 shadow-sm shadow-emerald-100 text-emerald-950'
               : 'bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50/50 text-slate-700'
@@ -208,7 +209,7 @@ export default function TaskStats({ tasks, onQuickFilterClick, activeFilter = 'a
           initial="hidden"
           animate="visible"
           whileHover={{ y: -2, transition: { duration: 0.2 } }}
-          className={`p-4 rounded-xl sm:rounded-2xl cursor-pointer border transition-all duration-200 ${
+          className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl cursor-pointer border transition-all duration-200 ${
             activeFilter === 'pending'
               ? 'bg-amber-50 border-amber-300 shadow-sm shadow-amber-100 text-amber-950'
               : 'bg-white border-slate-200 hover:border-amber-300 hover:bg-slate-50/50 text-slate-700'
@@ -236,7 +237,7 @@ export default function TaskStats({ tasks, onQuickFilterClick, activeFilter = 'a
           initial="hidden"
           animate="visible"
           whileHover={{ y: -2, transition: { duration: 0.2 } }}
-          className="p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-200 transition-all duration-200 text-slate-800"
+          className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-200 transition-all duration-200 text-slate-800"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -259,7 +260,7 @@ export default function TaskStats({ tasks, onQuickFilterClick, activeFilter = 'a
       {/* COMPREHENSIVE MONTHLY TRACKING & ANALYTICS WIDGET */}
       <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         {/* Interactive Month Switcher Header */}
-        <div className="bg-slate-50/70 px-4 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3.5">
+        <div className="bg-slate-50/70 px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-blue-100 text-blue-900 rounded-lg shrink-0">
               <BarChart3 size={15} />
@@ -401,7 +402,11 @@ export default function TaskStats({ tasks, onQuickFilterClick, activeFilter = 'a
                         <div key={catStat.category} className="flex flex-col gap-1">
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-slate-700 flex items-center gap-2">
-                              <span className={`w-2.5 h-2.5 rounded-full ${categoryConfig.accentBg}`} />
+                              <TaskIcon
+                                task={{ title: catStat.category, category: catStat.category }}
+                                size={12}
+                                variant="plain"
+                              />
                               {catStat.category}
                             </span>
                             <span className="text-slate-500 font-medium">

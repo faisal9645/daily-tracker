@@ -20,6 +20,7 @@ import {
   Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import TaskIcon from './TaskIcon';
 
 interface CalendarDailyProps {
   currentDate: Date;
@@ -231,29 +232,29 @@ export default function CalendarDaily({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
       {/* LEFT COLUMN: Controls & Task Checklist Form (7 Cols) */}
       <div className="lg:col-span-7 flex flex-col gap-4">
         {/* Day Navigation Header */}
-        <div className="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={() => changeDateByOffset(-1)}
-              className="p-1 px-2 text-slate-500 hover:text-blue-900 hover:bg-slate-50 border border-slate-200 rounded-lg cursor-pointer transition text-xs font-semibold"
+              className="touch-target px-3 text-slate-500 active:text-blue-900 active:bg-slate-50 border border-slate-200 rounded-lg transition text-sm font-semibold"
             >
               &larr;
             </button>
-            <div className="text-center sm:text-left">
-              <h2 className="text-xl font-bold font-display text-slate-900 tracking-tight">
-                {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            <div className="text-center flex-1 sm:flex-none sm:text-left min-w-0">
+              <h2 className="text-base sm:text-xl font-bold font-display text-slate-900 tracking-tight truncate">
+                {currentDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {dayTasks.length} tasks today • {dayTasks.filter((t) => t.completed).length} completed
+              <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">
+                {dayTasks.length} tasks • {dayTasks.filter((t) => t.completed).length} done
               </p>
             </div>
             <button
               onClick={() => changeDateByOffset(1)}
-              className="p-1 px-2 text-slate-500 hover:text-blue-900 hover:bg-slate-50 border border-slate-200 rounded-lg cursor-pointer transition text-xs font-semibold"
+              className="touch-target px-3 text-slate-500 active:text-blue-900 active:bg-slate-50 border border-slate-200 rounded-lg transition text-sm font-semibold"
             >
               &rarr;
             </button>
@@ -262,7 +263,7 @@ export default function CalendarDaily({
           <button
             id="add-task-trigger"
             onClick={() => setIsAdding(!isAdding)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+            className={`touch-target w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition ${
               isAdding
                 ? 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100'
                 : 'bg-blue-900 text-white shadow-xs hover:bg-blue-950'
@@ -606,7 +607,7 @@ export default function CalendarDaily({
             </motion.form>
           )}
         </AnimatePresence>        {/* Filters and List */}
-        <div className="bg-white p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-4">
+        <div className="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-3 sm:gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between pb-3 border-b border-slate-200">
             <h3 className="font-display font-semibold text-slate-800 text-sm flex items-center gap-1.5 shrink-0">
               <SlidersHorizontal size={15} />
@@ -681,16 +682,17 @@ export default function CalendarDaily({
                     <div
                       key={task.id}
                       id={`task-item-${task.id}`}
-                      className="group p-4 bg-white rounded-xl border border-slate-205 transition-all hover:border-blue-200 hover:bg-slate-50/40 hover:shadow-2xs flex items-start gap-3.5"
+                      className="group p-3 sm:p-4 bg-white rounded-xl border border-slate-205 transition-all active:border-blue-200 active:bg-slate-50/40 md:hover:border-blue-200 md:hover:bg-slate-50/40 md:hover:shadow-2xs flex items-start gap-2.5 sm:gap-3.5"
                     >
-                      {/* Checkbox button */}
                       <button
                         onClick={() => onToggleTask(task.id)}
-                        className="p-0.5 text-slate-400 hover:text-blue-900 mt-0.5 cursor-pointer"
+                        className="touch-target p-1 text-slate-400 active:text-blue-900 mt-0.5 shrink-0 -ml-1"
                         title="Mark Complete"
                       >
-                        <Circle size={20} className="stroke-1.5 text-slate-400" />
+                        <Circle size={22} className="stroke-1.5 text-slate-400" />
                       </button>
+
+                      <TaskIcon task={task} size={16} completed={false} className="mt-0.5" />
 
                       {/* Content Area */}
                       <div className="flex-1 min-w-0">
@@ -838,20 +840,20 @@ export default function CalendarDaily({
 
                       {/* Side Actions (Delete / Edit) */}
                       {!isEditing && (
-                        <div className="flex items-center gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <div className="flex items-center gap-0.5 sm:gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
                           <button
                             onClick={() => startEdit(task)}
-                            className="p-1.5 sm:p-1 text-slate-500 hover:text-blue-900 hover:bg-slate-100 rounded transition cursor-pointer"
+                            className="touch-target p-2 sm:p-1 text-slate-500 active:text-blue-900 active:bg-slate-100 rounded-lg transition"
                             title="Edit action"
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={16} className="sm:w-3.5 sm:h-3.5" />
                           </button>
                           <button
                             onClick={() => onDeleteTask(task.id)}
-                            className="p-1.5 sm:p-1 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                            className="touch-target p-2 sm:p-1 text-slate-500 active:text-rose-600 active:bg-rose-50 rounded-lg transition"
                             title="Delete action"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} className="sm:w-3.5 sm:h-3.5" />
                           </button>
                         </div>
                       )}
@@ -883,11 +885,12 @@ export default function CalendarDaily({
                     <div className="flex items-center gap-2.5 min-w-0">
                       <button
                         onClick={() => onToggleTask(task.id)}
-                        className="p-0.5 text-emerald-600 hover:text-slate-500 mt-0.5 cursor-pointer"
+                        className="p-0.5 text-emerald-600 hover:text-slate-500 mt-0.5 cursor-pointer shrink-0"
                         title="Mark Incomplete"
                       >
                         <CheckCircle size={18} className="fill-emerald-50 text-emerald-600 stroke-1.5" />
                       </button>
+                      <TaskIcon task={task} size={14} completed />
                       <div className="min-w-0">
                         <span className="text-sm font-medium line-through text-slate-400 truncate block">
                           {task.title}
@@ -909,10 +912,10 @@ export default function CalendarDaily({
 
                     <button
                       onClick={() => onDeleteTask(task.id)}
-                      className="p-1 px-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer transition animate-none"
+                      className="touch-target p-2 text-slate-500 active:text-rose-600 active:bg-rose-50 rounded-lg transition shrink-0"
                       title="Delete log"
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 ))}
@@ -933,7 +936,7 @@ export default function CalendarDaily({
         </div>
 
         {/* Timeline representation */}
-        <div className="flex flex-col border-l border-slate-200 pl-4 ml-2 gap-4 max-h-[600px] overflow-y-auto pr-1">
+        <div className="flex flex-col border-l border-slate-200 pl-3 sm:pl-4 ml-1 sm:ml-2 gap-3 sm:gap-4 max-h-[40dvh] sm:max-h-[500px] lg:max-h-[600px] overflow-y-auto pr-1">
           {hours.map((hour) => {
             const displayTime = `${hour > 12 ? hour - 12 : hour} ${hour >= 12 ? 'PM' : 'AM'}`;
             
@@ -969,8 +972,11 @@ export default function CalendarDaily({
                               : `${cat.bgClass} shadow-2xs`
                           }`}
                         >
-                          <div className="flex items-center justify-between font-semibold">
-                            <span className="truncate">{t.title}</span>
+                          <div className="flex items-center justify-between font-semibold gap-2">
+                            <span className="truncate flex items-center gap-1.5 min-w-0">
+                              <TaskIcon task={t} size={12} variant="plain" completed={t.completed} />
+                              <span className="truncate">{t.title}</span>
+                            </span>
                             <span className="text-[8px] font-bold uppercase">{t.time}</span>
                           </div>
                           {t.description && (

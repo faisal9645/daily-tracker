@@ -9,7 +9,9 @@ import {
   signInWithCredential,
   signInWithPopup,
   signOut,
+  updateProfile,
   type Auth,
+  type User,
   type UserCredential,
 } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
@@ -37,6 +39,69 @@ googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
 
+export function isGoogleUser(user: User | null): boolean {
+  if (!user) return false;
+  return user.providerData.some((provider) => provider.providerId === 'google.com');
+}
+
+export function getUserPhotoURL(user: User | null, fallbackPhotoURL?: string | null): string | null {
+  if (!user) return fallbackPhotoURL || null;
+  if (user.photoURL) return user.photoURL;
+
+  const googleProvider = user.providerData.find((provider) => provider.providerId === 'google.com');
+  if (googleProvider?.photoURL) return googleProvider.photoURL;
+
+  return fallbackPhotoURL || null;
+}
+
+async function syncGoogleProfilePhoto(user: User, photoURL?: string | null, displayName?: string | null): Promise<User> {
+  const resolvedPhoto = photoURL || getUserPhotoURL(user);
+  const resolvedName = displayName || user.displayName;
+
+  if (!resolvedPhoto && !resolvedName) {
+    return user;
+  }
+
+  const needsPhoto = resolvedPhoto && user.photoURL !== resolvedPhoto;
+  const needsName = resolvedName && user.displayName !== resolvedName;
+
+  if (!needsPhoto && !needsName) {
+    return user;
+  }
+
+  await updateProfile(user, {
+    ...(needsPhoto && resolvedPhoto ? { photoURL: resolvedPhoto } : {}),
+    ...(needsName && resolvedName ? { displayName: resolvedName } : {}),
+  });
+  await user.reload();
+
+  return auth.currentUser || user;
+}
+
+export async function ensureGoogleProfilePhoto(user: User): Promise<User> {
+  if (getUserPhotoURL(user)) {
+    return user;
+  }
+
+  if (isNativeApp) {
+    try {
+      const { user: nativeUser } = await FirebaseAuthentication.getCurrentUser();
+      if (nativeUser?.photoUrl || nativeUser?.displayName) {
+        return syncGoogleProfilePhoto(user, nativeUser.photoUrl, nativeUser.displayName);
+      }
+    } catch (error) {
+      console.error('Failed to read native Google profile:', error);
+    }
+  }
+
+  const providerPhoto = user.providerData.find((provider) => provider.providerId === 'google.com')?.photoURL;
+  if (providerPhoto || user.displayName) {
+    return syncGoogleProfilePhoto(user, providerPhoto, user.displayName);
+  }
+
+  return user;
+}
+
 export async function signInWithGoogle(): Promise<UserCredential> {
   if (isNativeApp) {
     const result = await FirebaseAuthentication.signInWithGoogle();
@@ -47,7 +112,20 @@ export async function signInWithGoogle(): Promise<UserCredential> {
     }
 
     const credential = GoogleAuthProvider.credential(idToken);
-    return signInWithCredential(auth, credential);
+    const userCredential = await signInWithCredential(auth, credential);
+
+    if (result.user?.photoUrl || result.user?.displayName) {
+      await syncGoogleProfilePhoto(
+        userCredential.user,
+        result.user.photoUrl,
+        result.user.displayName,
+      );
+      if (auth.currentUser) {
+        return { ...userCredential, user: auth.currentUser };
+      }
+    }
+
+    return userCredential;
   }
 
   return signInWithPopup(auth, googleProvider);

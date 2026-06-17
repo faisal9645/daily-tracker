@@ -1,7 +1,7 @@
 import { Task } from '../types';
 import { DAYS_SHORT, MONTHS, getCalendarGrid, formatDateString, DEFAULT_CATEGORIES } from '../utils';
-import { ChevronLeft, ChevronRight, PlusCircle, AlertCircle, Check, Target } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ChevronLeft, ChevronRight, PlusCircle, AlertCircle, Check } from 'lucide-react';
+import TaskIcon from './TaskIcon';
 
 interface CalendarMonthlyProps {
   currentDate: Date;
@@ -38,35 +38,35 @@ export default function CalendarMonthly({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs flex flex-col h-full min-h-[500px] sm:min-h-[580px]">
+    <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-6 shadow-xs flex flex-col h-full min-h-0 sm:min-h-[580px]">
       {/* Month Selector Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <div>
-          <h2 className="text-2xl font-bold font-display text-slate-900 tracking-tight">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-2xl font-bold font-display text-slate-900 tracking-tight truncate">
             {MONTHS[monthIndex]} <span className="font-normal text-slate-500">{year}</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">Click any cell to view and edit its daily tasks</p>
+          <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 hidden sm:block">Tap a day to view and edit tasks</p>
         </div>
         
-        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={selectToday}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-750 bg-white hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+            className="touch-target px-2.5 sm:px-3.5 py-1.5 text-[10px] sm:text-xs font-semibold rounded-lg border border-slate-200 text-slate-750 bg-white active:bg-slate-50 transition shadow-2xs"
           >
             Today
           </button>
           <div className="flex items-center rounded-lg border border-slate-200 bg-white shadow-2xs">
             <button
               onClick={prevMonth}
-              className="p-1.5 text-slate-500 hover:text-blue-900 hover:bg-slate-50 transition cursor-pointer rounded-l-lg"
+              className="touch-target p-2 text-slate-500 active:text-blue-900 active:bg-slate-50 transition rounded-l-lg"
               title="Previous Month"
             >
               <ChevronLeft size={18} />
             </button>
-            <div className="w-[1px] h-4 bg-slate-200" />
+            <div className="w-px h-4 bg-slate-200" />
             <button
               onClick={nextMonth}
-              className="p-1.5 text-slate-500 hover:text-blue-900 hover:bg-slate-50 transition cursor-pointer rounded-r-lg"
+              className="touch-target p-2 text-slate-500 active:text-blue-900 active:bg-slate-50 transition rounded-r-lg"
               title="Next Month"
             >
               <ChevronRight size={18} />
@@ -75,20 +75,20 @@ export default function CalendarMonthly({
         </div>
       </div>
 
-      {/* Scrollable grid wrapper to prevent squishing on mobile */}
-      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="min-w-[650px] sm:min-w-0 flex flex-col">
+      <div className="w-full">
+        <div className="flex flex-col">
           {/* Week Day Titles */}
-          <div className="grid grid-cols-7 gap-1 text-center font-display font-bold text-xs text-slate-500 mb-2 py-2 border-b border-slate-200">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 text-center font-display font-bold text-[10px] sm:text-xs text-slate-500 mb-1.5 sm:mb-2 py-1.5 sm:py-2 border-b border-slate-200">
             {DAYS_SHORT.map((day) => (
               <div key={day} className="py-1">
-                {day}
+                <span className="sm:hidden">{day.charAt(0)}</span>
+                <span className="hidden sm:inline">{day}</span>
               </div>
             ))}
           </div>
 
           {/* Month Days Grid */}
-          <div className="grid grid-cols-7 gap-1.5 flex-1 select-none">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1.5 flex-1 select-none">
             {gridDays.map((date, index) => {
               const dateStr = formatDateString(date);
               const dayTasks = tasks.filter((t) => t.date === dateStr);
@@ -105,7 +105,7 @@ export default function CalendarMonthly({
                 <div
                   key={dateStr + index}
                   onClick={() => onSelectDay(dateStr)}
-                  className={`group relative min-h-[90px] p-2 rounded-xl flex flex-col justify-between border transition-all cursor-pointer duration-200 ${
+                  className={`group relative min-h-[58px] sm:min-h-[90px] p-1 sm:p-2 rounded-lg sm:rounded-xl flex flex-col justify-between border transition-all cursor-pointer duration-200 active:scale-[0.98] ${
                     isCurrentMonth
                       ? 'bg-white border-slate-200 hover:border-blue-200 hover:bg-slate-50/50'
                       : 'bg-slate-50/70 border-slate-200/50 text-slate-400'
@@ -118,7 +118,7 @@ export default function CalendarMonthly({
                   {/* Day Number Header */}
                   <div className="flex items-start justify-between">
                     <span
-                      className={`text-xs font-semibold flex items-center justify-center w-6 h-6 rounded-lg ${
+                      className={`text-[10px] sm:text-xs font-semibold flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg ${
                         isToday
                           ? 'bg-blue-900 text-white font-bold'
                           : isSelected
@@ -147,8 +147,24 @@ export default function CalendarMonthly({
                     )}
                   </div>
 
-                  {/* Tasks Summary list (up to 2 visible, with "+ X more" label) */}
-                  <div className="mt-1 flex-1 flex flex-col justify-end gap-1 overflow-hidden">
+                  {/* Tasks Summary — compact on mobile */}
+                  <div className="mt-0.5 sm:mt-1 flex-1 flex flex-col justify-end gap-0.5 sm:gap-1 overflow-hidden">
+                    <div className="sm:hidden flex items-center justify-center gap-0.5 min-h-[14px]">
+                      {totalCount > 0 && (
+                        <>
+                          {Array.from({ length: Math.min(totalCount, 3) }).map((_, i) => (
+                            <span
+                              key={i}
+                              className={`w-1.5 h-1.5 rounded-full ${hasHighPriority && !dayTasks.every(t => t.completed) ? 'bg-rose-500' : 'bg-blue-600'}`}
+                            />
+                          ))}
+                          {totalCount > 3 && (
+                            <span className="text-[8px] font-bold text-slate-500">+{totalCount - 3}</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <div className="hidden sm:flex flex-col gap-1">
                     {dayTasks.slice(0, 2).map((task) => {
                       const catColor = DEFAULT_CATEGORIES[task.category] || DEFAULT_CATEGORIES['Other'];
                       return (
@@ -160,11 +176,7 @@ export default function CalendarMonthly({
                               : `${catColor.bgClass} shadow-3xs`
                           }`}
                         >
-                          {task.isGoal ? (
-                            <Target size={10} className={task.completed ? "text-slate-400 shrink-0" : "text-emerald-600 shrink-0"} />
-                          ) : (
-                            <span className={`w-1 h-1 rounded-full shrink-0 ${task.completed ? 'bg-slate-400' : catColor.accentBg}`} />
-                          )}
+                          <TaskIcon task={task} size={10} variant="plain" completed={task.completed} />
                           <span className="truncate text-slate-750">{task.title}</span>
                         </div>
                       );
@@ -174,11 +186,12 @@ export default function CalendarMonthly({
                         +{dayTasks.length - 2} more
                       </span>
                     )}
+                    </div>
                   </div>
 
-                  {/* Day Indicators Footer */}
+                  {/* Day Indicators Footer — desktop only */}
                   {totalCount > 0 && (
-                    <div className="flex items-center gap-1 mt-1 shrink-0">
+                    <div className="hidden sm:flex items-center gap-1 mt-1 shrink-0">
                       {/* High priority indicator */}
                       {hasHighPriority && (
                         <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" title="Incomplete High Priority Tasks" />

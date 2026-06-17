@@ -49,35 +49,35 @@ export default function CalendarYearly({
   const totalActiveDays = activeDaysSet.size;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col gap-6">
+    <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-6 shadow-xs flex flex-col gap-4 sm:gap-6">
       {/* Yearly Navigation Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-4 sm:pb-5">
+        <div className="min-w-0">
           <span className="text-[10px] uppercase font-bold tracking-widest text-blue-900 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
             Yearly Grid View
           </span>
-          <h2 className="text-3xl font-bold font-display text-slate-900 tracking-tight mt-1.5 flex items-center gap-2">
-            <span>Year of {selectedYear}</span>
+          <h2 className="text-xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight mt-1.5">
+            Year of {selectedYear}
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-1 hidden sm:block">
             Visual activity mapping of your yearly goals. Click any day to view daily tasks.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center sm:justify-end gap-2">
           <button
             onClick={handlePrevYear}
-            className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-slate-50 cursor-pointer transition shadow-2xs"
+            className="touch-target p-2 border border-slate-200 rounded-lg text-slate-500 active:text-blue-900 active:bg-slate-50 transition shadow-2xs"
             title="Previous Year"
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="font-display font-bold text-lg text-slate-800 px-3.5 py-1 bg-slate-50 rounded-lg border border-slate-200">
+          <span className="font-display font-bold text-base sm:text-lg text-slate-800 px-3.5 py-1.5 bg-slate-50 rounded-lg border border-slate-200 min-w-[4.5rem] text-center">
             {selectedYear}
           </span>
           <button
             onClick={handleNextYear}
-            className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-slate-50 cursor-pointer transition shadow-2xs"
+            className="touch-target p-2 border border-slate-200 rounded-lg text-slate-500 active:text-blue-900 active:bg-slate-50 transition shadow-2xs"
             title="Next Year"
           >
             <ChevronRight size={18} />
@@ -86,42 +86,42 @@ export default function CalendarYearly({
       </div>
 
       {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl flex items-center gap-3 shadow-2xs">
-          <div className="p-3 bg-blue-900/10 text-blue-900 rounded-lg">
-            <Activity size={18} />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-blue-50/50 border border-blue-100 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shadow-2xs col-span-2 md:col-span-1">
+          <div className="p-2 sm:p-3 bg-blue-900/10 text-blue-900 rounded-lg">
+            <Activity size={16} className="sm:w-[18px] sm:h-[18px]" />
           </div>
-          <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Consistency Rating</p>
-            <p className="text-xl font-bold font-display text-blue-900 mt-0.5">{totalActiveDays} Active Days</p>
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Active Days</p>
+            <p className="text-lg sm:text-xl font-bold font-display text-blue-900 mt-0.5">{totalActiveDays}</p>
           </div>
         </div>
 
-        <div className="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl flex items-center gap-3 shadow-2xs">
-          <div className="p-3 bg-emerald-600/10 text-emerald-700 rounded-lg">
-            <Award size={18} />
+        <div className="bg-emerald-50/50 border border-emerald-100 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shadow-2xs">
+          <div className="p-2 sm:p-3 bg-emerald-600/10 text-emerald-700 rounded-lg">
+            <Award size={16} className="sm:w-[18px] sm:h-[18px]" />
           </div>
-          <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Completed Value</p>
-            <p className="text-xl font-bold font-display text-emerald-700 mt-0.5">
-              {completedYearTasks}/{totalYearTasks} ({completedRatio}%)
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Completed</p>
+            <p className="text-lg sm:text-xl font-bold font-display text-emerald-700 mt-0.5">
+              {completedRatio}%
             </p>
           </div>
         </div>
 
-        <div className="bg-slate-50/70 border border-slate-100 p-4 rounded-xl flex items-center gap-3 shadow-2xs">
-          <div className="p-3 bg-slate-200/50 text-slate-700 rounded-lg">
-            <Calendar size={18} />
+        <div className="bg-slate-50/70 border border-slate-100 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shadow-2xs">
+          <div className="p-2 sm:p-3 bg-slate-200/50 text-slate-700 rounded-lg">
+            <Calendar size={16} className="sm:w-[18px] sm:h-[18px]" />
           </div>
-          <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Year-to-Date Volume</p>
-            <p className="text-xl font-bold font-display text-slate-800 mt-0.5">{totalYearTasks} Tasks Registered</p>
+          <div className="min-w-0">
+            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tasks</p>
+            <p className="text-lg sm:text-xl font-bold font-display text-slate-800 mt-0.5">{totalYearTasks}</p>
           </div>
         </div>
       </div>
 
       {/* Grid Legend */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 self-end mr-2 bg-slate-50 border border-slate-100 rounded-xl p-2.5">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl p-2 sm:p-2.5">
         <span className="font-medium text-[10px]">No Tasks</span>
         <div className="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-205" title="No task entries" />
         <div className="w-3.5 h-3.5 rounded bg-blue-50 border border-blue-200" title="Low task volume day" />
@@ -132,7 +132,7 @@ export default function CalendarYearly({
       </div>
 
       {/* 12-Month Calendar Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
         {MONTHS.map((monthName, monthIndex) => {
           const monthDays = getDaysInMonth(selectedYear, monthIndex);
 
@@ -149,7 +149,7 @@ export default function CalendarYearly({
           return (
             <div
               key={monthName}
-              className="p-4 rounded-xl border border-slate-200 hover:border-blue-200 hover:shadow-xs transition duration-200 flex flex-col justify-between bg-white"
+              className="p-2.5 sm:p-4 rounded-xl border border-slate-200 active:border-blue-200 md:hover:border-blue-200 md:hover:shadow-xs transition duration-200 flex flex-col justify-between bg-white"
             >
               {/* Month Selector Title */}
               <div className="flex items-center justify-between mb-3">

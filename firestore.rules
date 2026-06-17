@@ -12,24 +12,26 @@ service cloud.firestore {
       return id is string && id.size() <= 128; 
     }
     
-    function isSignedIn() { 
-      return request.auth != null; 
+    function isGoogleSignedIn() {
+      return isSignedIn()
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
     }
 
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return isGoogleSignedIn() && request.auth.uid == userId;
     }
 
     // User entity validation
     function isValidUser(data) {
       return data.keys().hasAll(['userId', 'email', 'createdAt'])
-        && data.keys().size() <= 4
+        && data.keys().size() <= 5
         && data.userId is string
         && data.userId.size() <= 128
         && data.email is string
         && data.email.size() <= 200
         && data.createdAt is string
-        && (!data.keys().hasAny(['displayName']) || (data.displayName is string && data.displayName.size() <= 100));
+        && (!data.keys().hasAny(['displayName']) || (data.displayName is string && data.displayName.size() <= 100))
+        && (!data.keys().hasAny(['photoURL']) || (data.photoURL is string && data.photoURL.size() <= 500));
     }
 
     // Task entity validation
