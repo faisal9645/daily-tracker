@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "79791798391",
+    "project_id": "gen-lang-client-0638229101",
+    "storage_bucket": "gen-lang-client-0638229101.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79791798391:android:planflowdailytracker",
+        "android_client_info": {
+          "package_name": "com.planflow.dailytracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "79791798391-jckqlume88fvs51r6cr3vr6sbllnkqss.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3_hEB23Kerud8ldQi1pYtbteovZnd9So"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "79791798391-jckqlume88fvs51r6cr3vr6sbllnkqss.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

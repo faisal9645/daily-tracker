@@ -23,7 +23,13 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { collection, onSnapshot, setDoc, doc, deleteDoc, writeBatch, getDoc } from 'firebase/firestore';
-import { auth, db, googleProvider, signInWithPopup, signOut, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, signInWithGoogle, signOutUser, handleFirestoreError, OperationType } from './firebase';
+
+const TASK_STORAGE_KEY = 'calendar_task_tracker_item_v4';
+const OLD_TASK_STORAGE_KEYS = [
+  'calendar_task_tracker_item_v2',
+  'calendar_task_tracker_item_v3',
+];
 
 // Returns clean empty tasks list
 function getSeedTasks(): Task[] {
@@ -45,14 +51,21 @@ export default function App() {
   // Multi-device cloud sync auth states
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [signInLoading, setSignInLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    OLD_TASK_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  }, []);
 
   // Auth Status and Profile Registration Listener
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       setAuthLoading(false);
-
       if (firebaseUser) {
+        setAuthError(null);
+
         // Safe profile creation inside Firestore to meet rules requirements
         const userRef = doc(db, 'users', firebaseUser.uid);
         try {
@@ -92,7 +105,7 @@ export default function App() {
 
         // Smart Local -> Cloud migration if target contains empty cloud registry
         if (fetchedTasks.length === 0) {
-          const localSaved = localStorage.getItem('calendar_task_tracker_item_v2');
+          const localSaved = localStorage.getItem(TASK_STORAGE_KEY);
           if (localSaved) {
             try {
               const localTasks = JSON.parse(localSaved) as Task[];
@@ -152,7 +165,7 @@ export default function App() {
       return () => unsubscribeTasks();
     } else {
       // Offline Local Storage Fallback
-      const saved = localStorage.getItem('calendar_task_tracker_item_v2');
+      const saved = localStorage.getItem(TASK_STORAGE_KEY);
       if (saved) {
         try {
           setTasks(JSON.parse(saved));
@@ -167,8 +180,8 @@ export default function App() {
 
   // Persist edits to local storage only during offline access
   useEffect(() => {
-    if (!authLoading && !user && tasks.length > 0) {
-      localStorage.setItem('calendar_task_tracker_item_v2', JSON.stringify(tasks));
+    if (!authLoading && !user) {
+      localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify(tasks));
     }
   }, [tasks, user, authLoading]);
 
@@ -313,7 +326,7 @@ export default function App() {
       <div className="absolute top-0 left-0 right-0 h-64 bg-linear-to-b from-blue-50/70 via-blue-50/10 to-transparent pointer-events-none -z-10" />
 
       {/* Main Navbar */}
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
+      <header className="mobile-safe-top border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 md:py-0 md:h-16 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-900 flex items-center justify-center text-white shadow-xs">
@@ -393,7 +406,7 @@ export default function App() {
                   </div>
                 )}
                 <button
-                  onClick={() => signOut(auth)}
+                  onClick={() => signOutUser().catch((err) => console.error('Sign out error:', err))}
                   className="p-1 text-[10px] font-bold text-slate-500 hover:text-rose-600 active:scale-95 transition cursor-pointer"
                   title="Sign Out of Cloud Session"
                 >
@@ -403,18 +416,31 @@ export default function App() {
             ) : (
               <button
                 onClick={async () => {
+                  setSignInLoading(true);
+                  setAuthError(null);
                   try {
-                    await signInWithPopup(auth, googleProvider);
+                    await signInWithGoogle();
                   } catch (err) {
-                    console.error("Auth popup error details:", err);
+                    const message = err instanceof Error ? err.message : 'Google sign-in failed.';
+                    console.error('Auth sign-in error:', err);
+                    setAuthError(message);
+                  } finally {
+                    setSignInLoading(false);
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 border border-blue-200 text-blue-900 bg-blue-50/75 hover:bg-blue-100/90 active:scale-98 transition rounded-xl cursor-pointer text-[10px] md:text-[11px] font-bold shadow-2xs transition-all animate-pulse"
+                disabled={signInLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-blue-200 text-blue-900 bg-blue-50/75 hover:bg-blue-100/90 active:scale-98 transition rounded-xl cursor-pointer text-[10px] md:text-[11px] font-bold shadow-2xs transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 title="Sign in with Google to sync calendar tasks"
               >
                 <CloudLightning size={12} className="text-blue-900 stroke-3 shrink-0" />
-                <span>Sync with Google</span>
+                <span>{signInLoading ? 'Signing in...' : 'Sync with Google'}</span>
               </button>
+            )}
+
+            {authError && (
+              <p className="w-full text-[10px] text-rose-600 font-medium text-center sm:text-right">
+                {authError}
+              </p>
             )}
 
 

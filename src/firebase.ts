@@ -1,12 +1,65 @@
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  initializeAuth,
+  indexedDBLocalPersistence,
+  signInWithCredential,
+  signInWithPopup,
+  signOut,
+  type Auth,
+  type UserCredential,
+} from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
+
+const isNativeApp = Capacitor.isNativePlatform();
+
+function createAuth(): Auth {
+  if (isNativeApp) {
+    return initializeAuth(app, {
+      persistence: indexedDBLocalPersistence,
+    });
+  }
+
+  return getAuth(app);
+}
+
+export const auth = createAuth();
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL */
-export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
+
+export async function signInWithGoogle(): Promise<UserCredential> {
+  if (isNativeApp) {
+    const result = await FirebaseAuthentication.signInWithGoogle();
+    const idToken = result.credential?.idToken;
+
+    if (!idToken) {
+      throw new Error('Google sign-in did not return an ID token.');
+    }
+
+    const credential = GoogleAuthProvider.credential(idToken);
+    return signInWithCredential(auth, credential);
+  }
+
+  return signInWithPopup(auth, googleProvider);
+}
+
+export async function signOutUser(): Promise<void> {
+  if (isNativeApp) {
+    await FirebaseAuthentication.signOut();
+  }
+
+  await signOut(auth);
+}
 
 export enum OperationType {
   CREATE = 'create',
@@ -67,5 +120,3 @@ async function testConnection() {
 }
 
 testConnection();
-
-export { signInWithPopup, signOut };

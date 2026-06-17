@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Planflow</string>
+    <string name="title_activity_main">Planflow</string>
+    <string name="package_name">com.planflow.dailytracker</string>
+    <string name="custom_url_scheme">com.planflow.dailytracker</string>
+</resources>
