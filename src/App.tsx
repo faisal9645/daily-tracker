@@ -20,6 +20,13 @@ import {
   Settings,
   Trash2,
   Bell,
+  Sun,
+  Moon,
+  Smartphone,
+  Maximize2,
+  Wifi,
+  Signal,
+  Battery,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -50,11 +57,26 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'completed' | 'pending'>('all');
   
+  // Dark mode states
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('planflow_dark_mode');
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Emulator display toggle (defaults to false for original desktop layout)
+  const [useDeviceFrame, setUseDeviceFrame] = useState<boolean>(false);
+
   // Quick Add Overlay modal state
   const [quickAddDate, setQuickAddDate] = useState<string | null>(null);
   const [quickTitle, setQuickTitle] = useState('');
   const [quickCategory, setQuickCategory] = useState('Personal');
   const [quickPriority, setQuickPriority] = useState<Priority>('medium');
+  const [quickDesc, setQuickDesc] = useState('');
+  const [quickTime, setQuickTime] = useState('');
+  const [quickDuration, setQuickDuration] = useState('');
+  const [quickIsGoal, setQuickIsGoal] = useState(false);
+  const [quickDeadline, setQuickDeadline] = useState('');
 
   // Multi-device cloud sync auth states
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -70,9 +92,33 @@ export default function App() {
   const [notificationStatus, setNotificationStatus] = useState<NotificationPermissionStatus>('unsupported');
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [scheduledReminderCount, setScheduledReminderCount] = useState(0);
+  
+  const [statusBarTime, setStatusBarTime] = useState('12:00');
+
   const suppressLocalImportRef = useRef(false);
   const clearingDataRef = useRef(false);
   const lastClearAtRef = useRef(0);
+
+  // Sync System Theme with local state
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('planflow_dark_mode', String(darkMode));
+  }, [darkMode]);
+
+  // Update Status Bar Time
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setStatusBarTime(now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     OLD_TASK_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
@@ -134,61 +180,61 @@ export default function App() {
       await handleGoogleRedirectResult();
 
       unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser && !isGoogleUser(firebaseUser)) {
-        await signOutUser();
-        setUser(null);
-        setProfilePhotoURL(null);
-        setAuthError('Please sign in with your Google account to continue.');
-        setAuthLoading(false);
-        return;
-      }
-
-      if (firebaseUser) {
-        const syncedUser = await ensureGoogleProfilePhoto(firebaseUser);
-        setUser(syncedUser);
-        setAuthLoading(false);
-        setAuthError(null);
-
-        const userRef = doc(db, 'users', syncedUser.uid);
-        let storedPhotoURL: string | null = null;
-        try {
-          const userSnap = await getDoc(userRef);
-          storedPhotoURL = userSnap.exists() ? (userSnap.data().photoURL as string | undefined) || null : null;
-
-          const resolvedPhotoURL = getUserPhotoURL(syncedUser, storedPhotoURL);
-          setProfilePhotoURL(resolvedPhotoURL);
-
-          await setDoc(
-            userRef,
-            {
-              userId: syncedUser.uid,
-              email: syncedUser.email || '',
-              displayName: syncedUser.displayName || '',
-              photoURL: resolvedPhotoURL || '',
-              createdAt: userSnap.exists() ? userSnap.data().createdAt : new Date().toISOString(),
-            },
-            { merge: true },
-          );
-        } catch (error) {
-          console.error('Error writing user profile:', error);
-          setProfilePhotoURL(getUserPhotoURL(syncedUser, storedPhotoURL));
+        if (firebaseUser && !isGoogleUser(firebaseUser)) {
+          await signOutUser();
+          setUser(null);
+          setProfilePhotoURL(null);
+          setAuthError('Please sign in with your Google account to continue.');
+          setAuthLoading(false);
+          return;
         }
 
-        if (isNativeNotificationsSupported()) {
-          requestNotificationPermissions()
-            .then((granted) => {
-              if (granted) {
-                getNotificationPermissionStatus().then(setNotificationStatus);
-              }
-            })
-            .catch((error) => console.error('Notification permission error:', error));
+        if (firebaseUser) {
+          const syncedUser = await ensureGoogleProfilePhoto(firebaseUser);
+          setUser(syncedUser);
+          setAuthLoading(false);
+          setAuthError(null);
+
+          const userRef = doc(db, 'users', syncedUser.uid);
+          let storedPhotoURL: string | null = null;
+          try {
+            const userSnap = await getDoc(userRef);
+            storedPhotoURL = userSnap.exists() ? (userSnap.data().photoURL as string | undefined) || null : null;
+
+            const resolvedPhotoURL = getUserPhotoURL(syncedUser, storedPhotoURL);
+            setProfilePhotoURL(resolvedPhotoURL);
+
+            await setDoc(
+              userRef,
+              {
+                userId: syncedUser.uid,
+                email: syncedUser.email || '',
+                displayName: syncedUser.displayName || '',
+                photoURL: resolvedPhotoURL || '',
+                createdAt: userSnap.exists() ? userSnap.data().createdAt : new Date().toISOString(),
+              },
+              { merge: true },
+            );
+          } catch (error) {
+            console.error('Error writing user profile:', error);
+            setProfilePhotoURL(getUserPhotoURL(syncedUser, storedPhotoURL));
+          }
+
+          if (isNativeNotificationsSupported()) {
+            requestNotificationPermissions()
+              .then((granted) => {
+                if (granted) {
+                  getNotificationPermissionStatus().then(setNotificationStatus);
+                }
+              })
+              .catch((error) => console.error('Notification permission error:', error));
+          }
+        } else {
+          setUser(null);
+          setProfilePhotoURL(null);
+          setAuthLoading(false);
         }
-      } else {
-        setUser(null);
-        setProfilePhotoURL(null);
-        setAuthLoading(false);
-      }
-    });
+      });
     };
 
     void initAuth();
@@ -212,7 +258,6 @@ export default function App() {
 
       const recentlyCleared = Date.now() - lastClearAtRef.current < 10000;
 
-      // Firestore emits cached docs first; ignore stale cache after a clear.
       if (
         fetchedTasks.length > 0 &&
         snapshot.metadata.fromCache &&
@@ -225,7 +270,6 @@ export default function App() {
         clearingDataRef.current = false;
       }
 
-      // One-time local -> cloud migration after first Google sign-in
       const shouldAttemptLocalImport =
         fetchedTasks.length === 0 &&
         !clearingDataRef.current &&
@@ -396,14 +440,26 @@ export default function App() {
     e.preventDefault();
     if (!quickTitle.trim() || !quickAddDate) return;
 
+    const durationNum = quickDuration ? parseInt(quickDuration) : undefined;
     handleAddTask({
       title: quickTitle.trim(),
+      description: quickDesc.trim() || undefined,
       date: quickAddDate,
+      time: quickTime || undefined,
       priority: quickPriority,
       category: quickCategory,
+      duration: durationNum,
+      isGoal: quickIsGoal,
+      deadline: quickIsGoal && quickDeadline ? quickDeadline : undefined
     });
 
+    // Reset Form
     setQuickTitle('');
+    setQuickDesc('');
+    setQuickTime('');
+    setQuickDuration('');
+    setQuickIsGoal(false);
+    setQuickDeadline('');
     setQuickAddDate(null);
   };
 
@@ -460,7 +516,6 @@ export default function App() {
     const knownTaskIds = tasks.map((task) => task.id);
     const tasksRef = collection(db, 'users', user.uid, 'tasks');
 
-    // Block cache rehydrate and local re-import before deletes run.
     clearingDataRef.current = true;
     lastClearAtRef.current = Date.now();
     suppressLocalImportRef.current = true;
@@ -474,7 +529,6 @@ export default function App() {
 
       await deleteAllTaskDocs(user.uid, Array.from(idsToDelete));
 
-      // Retry in case a pending local migration batch re-writes tasks.
       for (let attempt = 0; attempt < 3; attempt += 1) {
         const remaining = await getDocsFromServer(tasksRef);
         if (remaining.empty) break;
@@ -556,222 +610,104 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
-          <RefreshCw size={24} className="animate-spin text-blue-900" />
-          <p className="text-sm font-medium">Loading Planflow...</p>
+      <div className="min-h-screen bg-m3-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-m3-on-surface">
+          <RefreshCw size={32} className="animate-spin text-m3-primary" />
+          <p className="text-sm font-semibold tracking-wide font-display">Loading Planflow...</p>
         </div>
       </div>
     );
   }
 
+  // Auth/Sign-in Screen
   if (!user) {
     return (
-      <div className="min-h-[100dvh] bg-slate-50 text-slate-900 font-sans antialiased flex items-center justify-center px-4 py-8 mobile-safe-top mobile-safe-bottom">
-        <div className="absolute top-0 left-0 right-0 h-72 bg-linear-to-b from-blue-50/80 via-blue-50/20 to-transparent pointer-events-none" />
-        <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-lg p-6 sm:p-8 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-blue-900 flex items-center justify-center text-white shadow-xs mx-auto mb-5">
-            <CalendarDays size={28} className="stroke-2" />
+      <div className="min-h-screen bg-m3-background text-m3-on-background font-sans antialiased flex items-center justify-center px-4 py-8 relative">
+        <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-m3-primary/10 via-transparent to-transparent pointer-events-none -z-10" />
+        <div className="relative w-full max-w-md bg-m3-surface-container border border-m3-surface-variant/40 rounded-[32px] shadow-xl p-8 text-center">
+          <div className="w-16 h-16 rounded-[24px] bg-m3-primary flex items-center justify-center text-m3-on-primary shadow-lg mx-auto mb-6">
+            <CalendarDays size={32} className="stroke-2" />
           </div>
-          <h1 className="font-display font-bold text-2xl text-blue-950 tracking-tight">Planflow</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Sign in with Google to access your daily, monthly, and yearly task planner.
+          <h1 className="font-display font-extrabold text-3xl text-m3-on-surface tracking-tight">Planflow</h1>
+          <p className="mt-3 text-sm text-m3-on-surface-variant leading-relaxed">
+            Welcome to Daily Tracker. Sign in with Google to sync your daily tasks, monthly grid, and yearly activity heatmap.
           </p>
 
           <button
             onClick={handleGoogleSignIn}
             disabled={signInLoading}
-            className="touch-target mt-8 w-full flex items-center justify-center gap-3 px-4 py-3.5 border border-slate-200 bg-white active:bg-slate-50 active:scale-[0.99] transition rounded-xl text-sm font-semibold text-slate-700 shadow-2xs disabled:opacity-60 disabled:cursor-not-allowed"
+            className="mt-8 w-full flex items-center justify-center gap-4 px-5 py-4 border border-m3-outline/30 bg-m3-surface hover:bg-m3-surface-variant/30 active:scale-[0.98] transition-all duration-200 rounded-[20px] text-sm font-bold text-m3-on-surface shadow-xs disabled:opacity-50 cursor-pointer"
           >
-            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
               <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.223 36 24 36c-5.522 0-10-4.478-10-10s4.478-10 10-10c2.837 0 5.402 1.062 7.36 2.804l5.657-5.657C33.64 10.053 29.082 8 24 8 12.955 8 4 16.955 4 28s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
               <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c2.837 0 5.402 1.062 7.36 2.804l5.657-5.657C33.64 10.053 29.082 8 24 8 16.318 8 9.656 13.337 6.306 14.691z" />
               <path fill="#4CAF50" d="M24 48c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 39.091 26.715 40 24 40c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 43.556 16.227 48 24 48z" />
               <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-1.015 2.926-3.227 5.364-5.993 6.981l6.19 5.238C39.99 36.071 44 32.428 44 28c0-1.341-.138-2.65-.389-3.917z" />
             </svg>
-            <span>{signInLoading ? 'Signing in...' : 'Continue with Google'}</span>
+            <span>{signInLoading ? 'Signing in...' : 'Sign in with Google'}</span>
           </button>
 
           {authError && (
-            <p className="mt-4 text-xs text-rose-600 font-medium">{authError}</p>
+            <p className="mt-5 text-xs text-red-500 font-semibold">{authError}</p>
           )}
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-[100dvh] bg-slate-50 text-slate-900 font-sans antialiased relative">
-      {/* Visual background accents */}
-      <div className="absolute top-0 left-0 right-0 h-64 bg-linear-to-b from-blue-50/70 via-blue-50/10 to-transparent pointer-events-none -z-10" />
-
-      {/* Main Navbar */}
-      <header className="mobile-safe-top border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 md:py-0 md:h-16">
-          {/* Mobile top bar */}
-          <div className="flex md:hidden items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-blue-900 flex items-center justify-center text-white shadow-xs shrink-0">
-                <CalendarDays size={18} className="stroke-2" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="font-display font-bold text-base text-blue-950 tracking-tight truncate">Planflow</h1>
-                <p className="text-[9px] text-slate-500 font-medium uppercase tracking-wide truncate">
-                  {currentView === 'daily' ? 'Daily Planner' : currentView === 'monthly' ? 'Monthly Grid' : 'Yearly Heatmap'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                onClick={() => {
-                  setSettingsOpen(true);
-                  setShowClearConfirm(false);
-                  setSettingsError(null);
-                  setSettingsMessage(null);
-                }}
-                className="touch-target p-2 border border-slate-200 rounded-xl bg-white text-slate-600 active:bg-slate-50 transition"
-                title="Settings"
-              >
-                <Settings size={16} />
-              </button>
-              <UserAvatar
-                user={user}
-                fallbackPhotoURL={profilePhotoURL}
-                size="md"
-                onClick={() => {
-                  setSettingsOpen(true);
-                  setShowClearConfirm(false);
-                  setSettingsError(null);
-                  setSettingsMessage(null);
-                }}
-              />
-            </div>
+  // App Layout Helper Component (Mobile format)
+  const MobileAppBody = () => (
+    <div className="flex-1 flex flex-col overflow-hidden relative">
+      {/* Top App Bar (M3 style) */}
+      <header className="mobile-safe-top border-b border-m3-surface-variant/30 bg-m3-surface-container px-5 py-3 flex items-center justify-between z-45 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-m3-primary flex items-center justify-center text-m3-on-primary shadow-xs">
+            <CalendarDays size={20} className="stroke-2" />
           </div>
-
-          {/* Desktop header */}
-          <div className="hidden md:flex items-center justify-between gap-4 h-16">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-900 flex items-center justify-center text-white shadow-xs">
-              <CalendarDays size={20} className="stroke-2" />
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-lg md:text-xl text-blue-950 tracking-tight">
-                Planflow
-              </h1>
-              <p className="text-[10px] text-slate-500 font-medium tracking-wide uppercase">Daily • Monthly • Yearly Action Maps</p>
-            </div>
+          <div>
+            <h1 className="font-display font-extrabold text-base text-m3-on-surface leading-tight">Planflow</h1>
+            <p className="text-[10px] text-m3-on-surface-variant font-bold uppercase tracking-wider">
+              {currentView === 'daily' ? 'Daily Tasks' : currentView === 'monthly' ? 'Monthly Calendar' : 'Yearly Activity'}
+            </p>
           </div>
+        </div>
 
-          {/* View Selection Controls */}
-          <div className="flex items-center bg-slate-100 border border-slate-200 p-1 rounded-xl gap-1">
-            <button
-              onClick={() => setCurrentView('daily')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer select-none ${
-                currentView === 'daily'
-                  ? 'bg-blue-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-blue-900 hover:bg-slate-50'
-              }`}
-            >
-              <FileCheck2 size={13} />
-              <span className="hidden sm:inline">Daily Planner</span>
-              <span className="sm:hidden">Daily</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentView('monthly')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer select-none ${
-                currentView === 'monthly'
-                  ? 'bg-blue-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-blue-900 hover:bg-slate-50'
-              }`}
-            >
-              <Calendar size={13} />
-              <span className="hidden sm:inline">Monthly Grid</span>
-              <span className="sm:hidden">Monthly</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentView('yearly')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer select-none ${
-                currentView === 'yearly'
-                  ? 'bg-blue-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-blue-900 hover:bg-slate-50'
-              }`}
-            >
-              <CalendarDays size={13} />
-              <span className="hidden sm:inline">Yearly Heatmap</span>
-              <span className="sm:hidden">Yearly</span>
-            </button>
-          </div>
-
-          {/* Account */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setSettingsOpen(true);
-                setShowClearConfirm(false);
-                setSettingsError(null);
-                setSettingsMessage(null);
-              }}
-              className="p-2 border border-slate-200 rounded-xl bg-white text-slate-600 hover:text-blue-900 hover:bg-slate-50 active:scale-95 transition cursor-pointer shadow-2xs"
-              title="Settings"
-            >
-              <Settings size={14} />
-            </button>
-            <div className="flex items-center gap-2 px-3 py-1.5 border border-emerald-200 bg-emerald-50 text-emerald-800 rounded-xl max-w-full select-none shadow-2xs">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="text-[9px] font-bold uppercase tracking-wider shrink-0">Google Account</span>
-              <UserAvatar user={user} fallbackPhotoURL={profilePhotoURL} size="xs" />
-              <button
-                onClick={() => signOutUser().catch((err) => console.error('Sign out error:', err))}
-                className="p-1 text-[10px] font-bold text-slate-500 hover:text-rose-600 active:scale-95 transition cursor-pointer"
-                title="Sign Out"
-              >
-                <LogOut size={12} />
-              </button>
-            </div>
-          </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer"
+            title="Toggle theme"
+          >
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            onClick={() => {
+              setSettingsOpen(true);
+              setShowClearConfirm(false);
+              setSettingsError(null);
+              setSettingsMessage(null);
+            }}
+            className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer"
+            title="Settings"
+          >
+            <Settings size={18} />
+          </button>
+          <UserAvatar
+            user={user}
+            fallbackPhotoURL={profilePhotoURL}
+            size="sm"
+            onClick={() => {
+              setSettingsOpen(true);
+              setShowClearConfirm(false);
+              setSettingsError(null);
+              setSettingsMessage(null);
+            }}
+          />
         </div>
       </header>
 
-      {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-lg mobile-safe-bottom shadow-[0_-4px_24px_rgba(15,23,42,0.08)]">
-        <div className="grid grid-cols-3 gap-1 px-2 pt-2 pb-1">
-          <button
-            onClick={() => setCurrentView('daily')}
-            className={`touch-target flex flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-bold transition ${
-              currentView === 'daily' ? 'bg-blue-900 text-white' : 'text-slate-500 active:bg-slate-100'
-            }`}
-          >
-            <FileCheck2 size={18} />
-            Daily
-          </button>
-          <button
-            onClick={() => setCurrentView('monthly')}
-            className={`touch-target flex flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-bold transition ${
-              currentView === 'monthly' ? 'bg-blue-900 text-white' : 'text-slate-500 active:bg-slate-100'
-            }`}
-          >
-            <Calendar size={18} />
-            Monthly
-          </button>
-          <button
-            onClick={() => setCurrentView('yearly')}
-            className={`touch-target flex flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-bold transition ${
-              currentView === 'yearly' ? 'bg-blue-900 text-white' : 'text-slate-500 active:bg-slate-100'
-            }`}
-          >
-            <CalendarDays size={18} />
-            Yearly
-          </button>
-        </div>
-      </nav>
-
-      {/* Main Content Layout Container */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 mobile-page md:pb-6">
-        
-        {/* Dynamic Statistics Block */}
+      {/* Main View Area */}
+      <main className="flex-1 overflow-y-auto px-4 py-4 bg-m3-background pb-24">
         <TaskStats
           tasks={tasks}
           activeFilter={activeFilter}
@@ -781,14 +717,13 @@ export default function App() {
           }}
         />
 
-        {/* View Selection Section */}
-        <div className="mt-4">
+        <div className="mt-4 pb-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.2 }}
             >
               {currentView === 'daily' && (
@@ -830,239 +765,723 @@ export default function App() {
         </div>
       </main>
 
-      {/* FOOTER */}
-      <footer className="hidden md:block border-t border-slate-200 bg-white py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-500 text-center sm:text-left">
-            &copy; 2026 Planflow Task & Calendar Manager. Handcrafted offline-first workspace tool.
-          </p>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
-            <Info size={12} className="text-blue-900" />
-            <span>Interactive clicking enabled on all calendar elements</span>
+      {/* FAB (Floating Action Button) for Mobile */}
+      <button
+        onClick={() => setQuickAddDate(formatDateString(selectedDate))}
+        className="fixed bottom-24 right-5 z-40 w-14 h-14 bg-m3-primary-container text-m3-on-primary-container active:scale-95 active:bg-m3-primary hover:shadow-xl rounded-[20px] flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer"
+        title="Add new task"
+      >
+        <Plus size={28} className="stroke-[2.5]" />
+      </button>
+
+      {/* Mobile M3 Bottom Navbar */}
+      <nav className="absolute bottom-0 inset-x-0 z-40 border-t border-m3-surface-variant/30 bg-m3-surface-container px-4 py-2 flex items-center justify-around shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        {[
+          { view: 'daily', label: 'Daily', icon: <FileCheck2 size={20} /> },
+          { view: 'monthly', label: 'Monthly', icon: <Calendar size={20} /> },
+          { view: 'yearly', label: 'Yearly', icon: <CalendarDays size={20} /> }
+        ].map((item) => {
+          const isActive = currentView === item.view;
+          return (
+            <button
+              key={item.view}
+              onClick={() => setCurrentView(item.view as CalendarView)}
+              className="flex flex-col items-center justify-center gap-0.5 py-1 w-20 relative cursor-pointer"
+            >
+              <div
+                className={`flex items-center justify-center px-5 py-1.5 rounded-full transition-all duration-200 ${
+                  isActive
+                    ? 'bg-m3-primary-container text-m3-on-primary-container dark:bg-m3-secondary-container dark:text-m3-on-secondary-container scale-105'
+                    : 'text-m3-on-surface-variant hover:bg-m3-surface-variant/20'
+                }`}
+              >
+                {item.icon}
+              </div>
+              <span className={`text-[10px] tracking-wide font-semibold mt-0.5 ${isActive ? 'text-m3-on-surface font-extrabold' : 'text-m3-on-surface-variant'}`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+
+  // Simulated power / vol buttons actions
+  const handlePowerButton = () => {
+    setDarkMode(!darkMode);
+  };
+  const handleVolumeUp = () => {
+    alert("Volume Increased (Simulated)");
+  };
+  const handleVolumeDown = () => {
+    alert("Volume Decreased (Simulated)");
+  };
+
+  return (
+    <div className={`min-h-screen flex flex-col transition-all duration-200 bg-m3-background text-m3-on-background ${darkMode ? 'dark' : ''}`}>
+      {/* 1. Android Phone Frame (Emulator Mode) */}
+      {useDeviceFrame ? (
+        <div className="flex-1 flex flex-col">
+          {/* Emulator controller header */}
+          <div className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 text-white z-50 shadow-md shrink-0">
+            <div className="flex items-center gap-3">
+              <Smartphone className="text-m3-primary animate-pulse" size={24} />
+              <div>
+                <h2 className="text-base font-extrabold tracking-tight font-display text-white">Planflow Android Previewer</h2>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Device: Google Pixel 9 Pro (Simulated)</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setUseDeviceFrame(false)}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-850 hover:bg-slate-800 active:scale-95 transition-all text-xs font-bold rounded-lg cursor-pointer border border-slate-700"
+            >
+              <Maximize2 size={14} />
+              <span>Full Screen Desktop Layout</span>
+            </button>
+          </div>
+
+          {/* Emulator container wrapper */}
+          <div className="phone-emulator-container flex-1 flex items-center justify-center p-6 bg-slate-950">
+            <div className="phone-emulator relative">
+              <div className="phone-btn-power" onClick={handlePowerButton} title="Toggle Dark/Light Mode" />
+              <div className="phone-btn-volup" onClick={handleVolumeUp} title="Volume Up" />
+              <div className="phone-btn-voldown" onClick={handleVolumeDown} title="Volume Down" />
+
+              <div className="phone-screen bg-m3-background flex flex-col">
+                <div className="phone-notch-container">
+                  <div className="phone-camera-hole" />
+                </div>
+
+                {/* Status Bar */}
+                <div className="phone-status-bar flex justify-between items-center px-6 pt-1 select-none">
+                  <div className="text-[11px] font-bold text-m3-on-surface">{statusBarTime}</div>
+                  <div className="flex items-center gap-1.5">
+                    <Signal size={12} className="text-m3-on-surface" />
+                    <Wifi size={12} className="text-m3-on-surface" />
+                    <span className="text-[9px] font-extrabold text-m3-on-surface leading-none pt-0.5">LTE</span>
+                    <Battery size={13} className="text-m3-on-surface rotate-90 scale-x-[-1] ml-0.5" />
+                  </div>
+                </div>
+
+                {/* Mobile App inside Pixel Screen */}
+                <MobileAppBody />
+
+                {/* Gesture Indicator */}
+                <div className="phone-bottom-nav-bar flex items-center justify-center pb-2 bg-m3-surface-container shrink-0">
+                  <div className="phone-gesture-pill bg-m3-on-surface/40" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
-
-      {/* QUICK ADD ACTION DIALOG OVERLAY (MODAL) */}
-      <AnimatePresence>
-        {quickAddDate && (
-          <div className="fixed inset-0 bg-blue-950/40 backdrop-blur-xs flex items-end sm:items-center justify-center z-50 p-3 sm:p-4">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 12 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              className="bg-white rounded-t-2xl sm:rounded-2xl border border-slate-200 shadow-xl max-w-sm w-full p-5 sm:p-6 flex flex-col gap-4 relative mobile-modal mobile-safe-bottom"
-            >
-              <button
-                onClick={() => setQuickAddDate(null)}
-                className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-
-              <div>
-                <span className="text-[10px] font-bold text-blue-900 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full uppercase">
-                  Quick Add Action
-                </span>
-                <h4 className="font-display font-bold text-slate-900 mt-2">
-                  Add task for {quickAddDate}
-                </h4>
+      ) : (
+        // 2. Full-Screen Layout (Original desktop structure preserved, mobile layout on screens < 768px)
+        <div className="flex-1 flex flex-col overflow-hidden min-h-screen">
+          
+          {/* Desktop Sticky Header Navbar */}
+          <header className="hidden md:block border-b border-m3-surface-variant/30 bg-m3-surface-container sticky top-0 z-40 shrink-0">
+            <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-m3-primary flex items-center justify-center text-m3-on-primary shadow-xs">
+                  <CalendarDays size={22} className="stroke-2" />
+                </div>
+                <div>
+                  <h1 className="font-display font-extrabold text-lg text-m3-on-surface">Planflow</h1>
+                  <p className="text-[10px] text-m3-on-surface-variant font-bold uppercase tracking-wider">Task & Calendar Planner</p>
+                </div>
               </div>
 
-              <form onSubmit={handleQuickAddSubmit} className="flex flex-col gap-3.5">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Action Title *</label>
-                  <input
-                    id="quick-add-title-input"
-                    type="text"
-                    required
-                    autoFocus
-                    placeholder="e.g. Review milestone blueprints"
-                    value={quickTitle}
-                    onChange={(e) => setQuickTitle(e.target.value)}
-                    className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs focus:ring-1 focus:ring-blue-900 outline-hidden"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Category</label>
-                    <select
-                      id="quick-add-category-select"
-                      value={quickCategory}
-                      onChange={(e) => setQuickCategory(e.target.value)}
-                      className="px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-1 focus:ring-blue-900 outline-hidden bg-white text-slate-950 cursor-pointer"
+              {/* Central View Selector tabs */}
+              <div className="flex items-center bg-m3-surface border border-m3-outline/15 p-1 rounded-2xl shadow-3xs gap-1">
+                {[
+                  { view: 'daily', label: 'Daily Planner', icon: <FileCheck2 size={14} /> },
+                  { view: 'monthly', label: 'Monthly Grid', icon: <Calendar size={14} /> },
+                  { view: 'yearly', label: 'Yearly Heatmap', icon: <CalendarDays size={14} /> }
+                ].map((item) => {
+                  const isActive = currentView === item.view;
+                  return (
+                    <button
+                      key={item.view}
+                      onClick={() => setCurrentView(item.view as CalendarView)}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer select-none ${
+                        isActive
+                          ? 'bg-m3-primary text-white shadow-3xs'
+                          : 'text-m3-on-surface-variant hover:bg-m3-surface-variant/20 hover:text-m3-on-surface'
+                      }`}
                     >
-                      {Object.keys(DEFAULT_CATEGORIES).map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Urgency</label>
-                    <select
-                      id="quick-add-priority-select"
-                      value={quickPriority}
-                      onChange={(e) => setQuickPriority(e.target.value as Priority)}
-                      className="px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-1 focus:ring-blue-900 outline-hidden bg-white text-slate-950 cursor-pointer"
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                  </div>
-                </div>
-
+              {/* Right actions */}
+              <div className="flex items-center gap-3">
                 <button
-                  id="quick-add-submit-button"
-                  type="submit"
-                  className="bg-blue-900 hover:bg-blue-950 text-white font-bold text-[11px] uppercase tracking-wider py-2.5 rounded-xl transition cursor-pointer mt-2"
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2.5 rounded-full hover:bg-m3-surface-variant/40 transition text-m3-on-surface cursor-pointer"
+                  title="Toggle theme"
                 >
-                  Confirm Action
+                  {darkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
-              </form>
-            </motion.div>
+                <button
+                  onClick={() => {
+                    setSettingsOpen(true);
+                    setShowClearConfirm(false);
+                    setSettingsError(null);
+                    setSettingsMessage(null);
+                  }}
+                  className="p-2.5 rounded-full hover:bg-m3-surface-variant/40 transition text-m3-on-surface cursor-pointer"
+                  title="Settings"
+                >
+                  <Settings size={18} />
+                </button>
+
+                {/* Google Connection Badge */}
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold select-none shadow-3xs">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="uppercase tracking-wider text-[9px]">Google</span>
+                  <UserAvatar user={user} fallbackPhotoURL={profilePhotoURL} size="xs" />
+                  <button
+                    onClick={() => signOutUser().catch((err) => console.error('Sign out error:', err))}
+                    className="ml-1 p-0.5 text-m3-on-surface-variant hover:text-red-500 transition"
+                    title="Sign Out"
+                  >
+                    <LogOut size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Desktop Floating Preview Button (Floating Android device toggler) */}
+          <button
+            onClick={() => setUseDeviceFrame(true)}
+            className="hidden md:flex fixed bottom-6 left-6 z-40 bg-slate-900 border border-slate-700 text-white rounded-full p-3 shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer items-center justify-center"
+            title="Preview inside Pixel Device"
+          >
+            <Smartphone size={20} className="text-m3-primary" />
+            <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-200 font-bold text-xs whitespace-nowrap pl-0">Phone Mode</span>
+          </button>
+
+          {/* Main page content wrapper - responsive (scrollable on desktop, full scroll on mobile) */}
+          <div className="flex-1 overflow-y-auto flex flex-col">
+            
+            {/* Mobile Header (Rendered on mobile viewport screen widths < 768px) */}
+            <header className="md:hidden mobile-safe-top border-b border-m3-surface-variant/30 bg-m3-surface-container px-5 py-3 flex items-center justify-between z-40 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-m3-primary flex items-center justify-center text-m3-on-primary shadow-xs">
+                  <CalendarDays size={20} className="stroke-2" />
+                </div>
+                <div>
+                  <h1 className="font-display font-extrabold text-base text-m3-on-surface leading-tight">Planflow</h1>
+                  <p className="text-[10px] text-m3-on-surface-variant font-bold uppercase tracking-wider">
+                    {currentView === 'daily' ? 'Daily Tasks' : currentView === 'monthly' ? 'Monthly Calendar' : 'Yearly Activity'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer"
+                >
+                  {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+                <button
+                  onClick={() => {
+                    setSettingsOpen(true);
+                    setShowClearConfirm(false);
+                    setSettingsError(null);
+                    setSettingsMessage(null);
+                  }}
+                  className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer"
+                >
+                  <Settings size={18} />
+                </button>
+                <UserAvatar
+                  user={user}
+                  fallbackPhotoURL={profilePhotoURL}
+                  size="sm"
+                  onClick={() => {
+                    setSettingsOpen(true);
+                    setShowClearConfirm(false);
+                    setSettingsError(null);
+                    setSettingsMessage(null);
+                  }}
+                />
+              </div>
+            </header>
+
+            {/* Dashboard Content Container */}
+            <main className="flex-1 max-w-7xl mx-auto px-4 py-6 w-full pb-24 md:pb-12">
+              <TaskStats
+                tasks={tasks}
+                activeFilter={activeFilter}
+                onQuickFilterClick={(status) => {
+                  setActiveFilter(status);
+                  setCurrentView('daily');
+                }}
+              />
+
+              <div className="mt-4">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentView}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {currentView === 'daily' && (
+                      <CalendarDaily
+                        currentDate={selectedDate}
+                        onChangeDate={setSelectedDate}
+                        tasks={tasks}
+                        onAddTask={handleAddTask}
+                        onToggleTask={handleToggleTask}
+                        onDeleteTask={handleDeleteTask}
+                        onEditTask={handleEditTask}
+                      />
+                    )}
+
+                    {currentView === 'monthly' && (
+                      <CalendarMonthly
+                        currentDate={selectedDate}
+                        onChangeDate={setSelectedDate}
+                        tasks={tasks}
+                        onSelectDay={jumpToDateString}
+                        onQuickAddTask={(dateStr) => setQuickAddDate(dateStr)}
+                      />
+                    )}
+
+                    {currentView === 'yearly' && (
+                      <CalendarYearly
+                        currentDate={selectedDate}
+                        onChangeDate={setSelectedDate}
+                        tasks={tasks}
+                        onSelectDay={jumpToDateString}
+                        onSelectMonth={(m) => {
+                          setSelectedDate(new Date(selectedDate.getFullYear(), m, 1));
+                          setCurrentView('monthly');
+                        }}
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </main>
+
+            {/* Floating Action Button (FAB) - Mobile only */}
+            <button
+              onClick={() => setQuickAddDate(formatDateString(selectedDate))}
+              className="md:hidden fixed bottom-24 right-5 z-40 w-14 h-14 bg-m3-primary-container text-m3-on-primary-container rounded-[20px] flex items-center justify-center shadow-lg active:scale-95 transition-all duration-200 cursor-pointer"
+              title="Add new task"
+            >
+              <Plus size={28} className="stroke-[2.5]" />
+            </button>
+
+            {/* Mobile bottom navbar (Mobile screen widths < 768px only) */}
+            <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-m3-surface-variant/30 bg-m3-surface-container px-4 py-2 flex items-center justify-around shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+              {[
+                { view: 'daily', label: 'Daily', icon: <FileCheck2 size={20} /> },
+                { view: 'monthly', label: 'Monthly', icon: <Calendar size={20} /> },
+                { view: 'yearly', label: 'Yearly', icon: <CalendarDays size={20} /> }
+              ].map((item) => {
+                const isActive = currentView === item.view;
+                return (
+                  <button
+                    key={item.view}
+                    onClick={() => setCurrentView(item.view as CalendarView)}
+                    className="flex flex-col items-center justify-center gap-0.5 py-1 w-20 relative cursor-pointer"
+                  >
+                    <div
+                      className={`flex items-center justify-center px-5 py-1.5 rounded-full transition-all duration-200 ${
+                        isActive
+                          ? 'bg-m3-primary-container text-m3-on-primary-container dark:bg-m3-secondary-container dark:text-m3-on-secondary-container scale-105'
+                          : 'text-m3-on-surface-variant hover:bg-m3-surface-variant/20'
+                      }`}
+                    >
+                      {item.icon}
+                    </div>
+                    <span className={`text-[10px] tracking-wide font-semibold mt-0.5 ${isActive ? 'text-m3-on-surface font-extrabold' : 'text-m3-on-surface-variant'}`}>
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Desktop footer (Desktop only) */}
+            <footer className="hidden md:block border-t border-m3-outline/10 bg-m3-surface-container/20 py-8 mt-12">
+              <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-m3-on-surface-variant/80 font-semibold select-none">
+                <p>&copy; 2026 Planflow Task & Calendar Manager. Handcrafted offline-first workspace tool.</p>
+                <span className="flex items-center gap-1">
+                  <Info size={12} className="text-m3-primary" />
+                  Interactive clicking enabled on all calendar elements
+                </span>
+              </div>
+            </footer>
+
           </div>
+        </div>
+      )}
+
+      {/* QUICK ADD / TASK ADD SLIDING BOTTOM SHEET (Mobile) / CENTERED MODAL (Desktop) */}
+      <AnimatePresence>
+        {quickAddDate && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setQuickAddDate(null)}
+              className="fixed inset-0 z-50 bottom-sheet-overlay cursor-pointer"
+            />
+            {/* Sheet / Dialog Modal (Responsive placement: sm:items-center sm:rounded-[28px]) */}
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+              <motion.div
+                initial={{ y: '20px', opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: '20px', opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="bg-m3-surface-container border border-m3-outline/20 shadow-2xl rounded-t-[32px] sm:rounded-[28px] p-6 max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto flex flex-col gap-4 w-full max-w-md pointer-events-auto shadow-2xl"
+              >
+                {/* Drag Handle Bar (Mobile only) */}
+                <div className="w-12 h-1.5 bg-m3-on-surface-variant/20 rounded-full mx-auto mb-1 sm:hidden" onClick={() => setQuickAddDate(null)} />
+
+                <div className="flex items-center justify-between border-b border-m3-outline/10 pb-3">
+                  <div>
+                    <span className="text-[10px] font-bold text-m3-primary bg-m3-primary-container px-3 py-1 rounded-full uppercase tracking-wider">
+                      New Task Entry
+                    </span>
+                    <h4 className="font-display font-extrabold text-lg text-m3-on-surface mt-2">
+                      Create Task for {quickAddDate}
+                    </h4>
+                  </div>
+                  <button
+                    onClick={() => setQuickAddDate(null)}
+                    className="p-1.5 hover:bg-m3-surface-variant/40 rounded-full text-m3-on-surface-variant cursor-pointer"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleQuickAddSubmit} className="flex flex-col gap-4 mt-1">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider pl-1">Action Title *</label>
+                    <input
+                      id="quick-add-title-input"
+                      type="text"
+                      required
+                      autoFocus
+                      placeholder="e.g. Design review presentation"
+                      value={quickTitle}
+                      onChange={(e) => setQuickTitle(e.target.value)}
+                      className="px-4 py-2.5 rounded-2xl border border-m3-outline/15 bg-m3-surface text-m3-on-surface text-sm focus:ring-2 focus:ring-m3-primary/30 outline-hidden"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider pl-1">Description (Optional)</label>
+                    <textarea
+                      id="quick-add-desc-input"
+                      placeholder="Details, link context..."
+                      value={quickDesc}
+                      onChange={(e) => setQuickDesc(e.target.value)}
+                      className="px-4 py-2.5 rounded-2xl border border-m3-outline/15 bg-m3-surface text-m3-on-surface text-sm focus:ring-2 focus:ring-m3-primary/30 outline-hidden resize-none"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider pl-1">Category</label>
+                      <select
+                        id="quick-add-category-select"
+                        value={quickCategory}
+                        onChange={(e) => setQuickCategory(e.target.value)}
+                        className="px-4 py-2.5 rounded-2xl border border-m3-outline/15 text-sm focus:ring-2 focus:ring-m3-primary/30 outline-hidden bg-m3-surface text-m3-on-surface cursor-pointer"
+                      >
+                        {Object.keys(DEFAULT_CATEGORIES).map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider pl-1">Urgency</label>
+                      <select
+                        id="quick-add-priority-select"
+                        value={quickPriority}
+                        onChange={(e) => setQuickPriority(e.target.value as Priority)}
+                        className="px-4 py-2.5 rounded-2xl border border-m3-outline/15 text-sm focus:ring-2 focus:ring-m3-primary/30 outline-hidden bg-m3-surface text-m3-on-surface cursor-pointer"
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider pl-1">Time (Optional)</label>
+                      <div className="relative">
+                        <Clock size={16} className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-m3-on-surface-variant" />
+                        <input
+                          id="quick-add-time-input"
+                          type="time"
+                          value={quickTime}
+                          onChange={(e) => setQuickTime(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-m3-outline/15 bg-m3-surface text-m3-on-surface text-sm focus:ring-2 focus:ring-m3-primary/30 outline-hidden"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider pl-1">Estimated Mins</label>
+                      <input
+                        id="quick-add-duration-input"
+                        type="number"
+                        min={1}
+                        placeholder="e.g. 30"
+                        value={quickDuration}
+                        onChange={(e) => setQuickDuration(e.target.value)}
+                        className="px-4 py-2.5 rounded-2xl border border-m3-outline/15 bg-m3-surface text-m3-on-surface text-sm focus:ring-2 focus:ring-m3-primary/30 outline-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Goal tasks */}
+                  <div className="border-t border-m3-outline/10 pt-3 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          id="quick-add-is-goal-checkbox"
+                          checked={quickIsGoal}
+                          onChange={(e) => {
+                            setQuickIsGoal(e.target.checked);
+                            if (e.target.checked && !quickDeadline) {
+                              const nextWeek = new Date(parseDateString(quickAddDate));
+                              nextWeek.setDate(nextWeek.getDate() + 7);
+                              setQuickDeadline(formatDateString(nextWeek));
+                            }
+                          }}
+                          className="w-4 h-4 text-m3-primary border-m3-outline/35 rounded focus:ring-m3-primary cursor-pointer"
+                        />
+                        <label htmlFor="quick-add-is-goal-checkbox" className="text-xs font-bold text-m3-on-surface cursor-pointer select-none">
+                          Mark as Goal (with Target Deadline)
+                        </label>
+                      </div>
+                      {quickIsGoal && (
+                        <span className="text-[9px] bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                          Goal Mode
+                        </span>
+                      )}
+                    </div>
+
+                    <AnimatePresence>
+                      {quickIsGoal && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="flex flex-col gap-1.5 overflow-hidden"
+                        >
+                          <label className="text-[9px] font-bold text-m3-on-surface-variant uppercase tracking-wider pl-1">Target Deadline Date</label>
+                          <input
+                            type="date"
+                            required
+                            value={quickDeadline}
+                            onChange={(e) => setQuickDeadline(e.target.value)}
+                            className="px-4 py-2 rounded-xl border border-m3-outline/15 bg-m3-surface text-m3-on-surface text-xs focus:ring-2 focus:ring-m3-primary/30 outline-hidden cursor-pointer"
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <button
+                    id="quick-add-submit-button"
+                    type="submit"
+                    className="bg-m3-primary hover:bg-m3-primary/90 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-2xl transition shadow-md hover:shadow-lg cursor-pointer mt-3"
+                  >
+                    Create Task
+                  </button>
+                </form>
+              </motion.div>
+            </div>
+          </>
         )}
       </AnimatePresence>
 
-      {/* SETTINGS MODAL */}
+      {/* SETTINGS SLIDING BOTTOM SHEET (Mobile) / CENTERED MODAL (Desktop) */}
       <AnimatePresence>
         {settingsOpen && (
-          <div className="fixed inset-0 bg-blue-950/40 backdrop-blur-xs flex items-end sm:items-center justify-center z-50 p-3 sm:p-4">
+          <>
+            {/* Backdrop */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 12 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              className="bg-white rounded-t-2xl sm:rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-5 sm:p-6 flex flex-col gap-5 relative mobile-modal mobile-safe-bottom"
-            >
-              <button
-                onClick={closeSettings}
-                className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeSettings}
+              className="fixed inset-0 z-50 bottom-sheet-overlay cursor-pointer"
+            />
+            {/* Modal Container */}
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none">
+              <motion.div
+                initial={{ y: '20px', opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: '20px', opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="bg-m3-surface-container border border-m3-outline/20 shadow-2xl rounded-t-[32px] sm:rounded-[28px] p-6 max-h-[90dvh] sm:max-h-[85dvh] overflow-y-auto flex flex-col gap-5 w-full max-w-md pointer-events-auto"
               >
-                <X size={16} />
-              </button>
+                {/* Drag Handle (Mobile only) */}
+                <div className="w-12 h-1.5 bg-m3-on-surface-variant/20 rounded-full mx-auto mb-1 sm:hidden" onClick={closeSettings} />
 
-              <div className="flex items-center gap-3">
-                <UserAvatar user={user} fallbackPhotoURL={profilePhotoURL} size="lg" />
-                <div>
-                <span className="text-[10px] font-bold text-blue-900 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full uppercase">
-                  Settings
-                </span>
-                <h4 className="font-display font-bold text-slate-900 mt-2">Account & Data</h4>
-                <p className="text-xs text-slate-500 mt-1">
-                  Signed in as {user.displayName || user.email}
-                </p>
-                </div>
-              </div>
-
-              {isNativeNotificationsSupported() && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Task Reminders</h5>
-                  <p className="text-xs text-slate-600 mt-2">
-                    Reminders fire 15 minutes before a timed task, or at 9:00 AM for tasks without a time.
-                    {scheduledReminderCount > 0 && (
-                      <span className="block mt-1 text-emerald-700 font-semibold">
-                        {scheduledReminderCount} reminder{scheduledReminderCount === 1 ? '' : 's'} currently scheduled.
-                      </span>
-                    )}
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full border ${
-                      notificationStatus === 'granted'
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                        : notificationStatus === 'denied'
-                          ? 'bg-rose-50 border-rose-200 text-rose-700'
-                          : 'bg-amber-50 border-amber-200 text-amber-800'
-                    }`}>
-                      {notificationStatus === 'granted' ? 'Enabled' : notificationStatus === 'denied' ? 'Blocked' : 'Not enabled'}
-                    </span>
-                    {notificationStatus !== 'granted' && (
-                      <button
-                        onClick={handleEnableNotifications}
-                        disabled={notificationLoading}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold transition cursor-pointer disabled:opacity-60"
-                      >
-                        <Bell size={14} />
-                        {notificationLoading ? 'Enabling...' : 'Enable Reminders'}
-                      </button>
-                    )}
-                  </div>
-                  {notificationStatus === 'granted' && (
-                    <button
-                      onClick={handleTestNotification}
-                      disabled={notificationLoading}
-                      className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-900 hover:bg-blue-100 text-xs font-bold transition cursor-pointer disabled:opacity-60"
-                    >
-                      <Bell size={14} />
-                      {notificationLoading ? 'Scheduling...' : 'Send Test Notification'}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Data Management</h5>
-                <p className="text-xs text-slate-600 mt-2">
-                  Permanently delete all tasks from your cloud account and this device.
-                </p>
-
-                {!showClearConfirm ? (
-                  <button
-                    onClick={() => {
-                      setShowClearConfirm(true);
-                      setSettingsError(null);
-                      setSettingsMessage(null);
-                    }}
-                    className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-xl text-xs font-bold transition cursor-pointer"
-                  >
-                    <Trash2 size={14} />
-                    Clear All Data
-                  </button>
-                ) : (
-                  <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3">
-                    <p className="text-xs text-rose-800 font-medium">
-                      Delete all {tasks.length} task{tasks.length === 1 ? '' : 's'}? This cannot be undone.
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => setShowClearConfirm(false)}
-                        disabled={clearDataLoading}
-                        className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 transition cursor-pointer disabled:opacity-60"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleClearAllData}
-                        disabled={clearDataLoading}
-                        className="flex-1 px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer disabled:opacity-60"
-                      >
-                        {clearDataLoading ? 'Deleting...' : 'Delete All'}
-                      </button>
+                <div className="flex items-center justify-between border-b border-m3-outline/10 pb-3">
+                  <div className="flex items-center gap-3">
+                    <UserAvatar user={user} fallbackPhotoURL={profilePhotoURL} size="md" />
+                    <div>
+                      <h4 className="font-display font-extrabold text-base text-m3-on-surface">Settings</h4>
+                      <p className="text-xs text-m3-on-surface-variant mt-0.5">
+                        {user.displayName || user.email}
+                      </p>
                     </div>
                   </div>
+                  <button
+                    onClick={closeSettings}
+                    className="p-1.5 hover:bg-m3-surface-variant/40 rounded-full text-m3-on-surface-variant cursor-pointer"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Notifications Panel */}
+                {isNativeNotificationsSupported() && (
+                  <div className="rounded-2xl border border-m3-outline/15 bg-m3-surface p-4 flex flex-col gap-3 shadow-3xs">
+                    <div>
+                      <h5 className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                        <Bell size={12} className="text-m3-primary" />
+                        Task Reminders
+                      </h5>
+                      <p className="text-xs text-m3-on-surface-variant mt-1.5 leading-relaxed">
+                        Sync alerts for upcoming scheduled tasks.
+                        {scheduledReminderCount > 0 && (
+                          <span className="block mt-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                            ✓ {scheduledReminderCount} reminder{scheduledReminderCount === 1 ? '' : 's'} scheduled.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                        notificationStatus === 'granted'
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold'
+                          : notificationStatus === 'denied'
+                            ? 'bg-red-500/10 border-red-500/20 text-red-500 font-extrabold'
+                            : 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold'
+                      }`}>
+                        Status: {notificationStatus === 'granted' ? 'Enabled' : notificationStatus === 'denied' ? 'Blocked' : 'Unset'}
+                      </span>
+                      {notificationStatus !== 'granted' && (
+                        <button
+                          onClick={handleEnableNotifications}
+                          disabled={notificationLoading}
+                          className="flex items-center gap-2 px-4 py-2 bg-m3-primary hover:bg-m3-primary/95 text-white text-xs font-bold rounded-xl transition cursor-pointer disabled:opacity-50"
+                        >
+                          <Bell size={12} />
+                          {notificationLoading ? 'Enabling...' : 'Enable Reminders'}
+                        </button>
+                      )}
+                    </div>
+                    {notificationStatus === 'granted' && (
+                      <button
+                        onClick={handleTestNotification}
+                        disabled={notificationLoading}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-m3-outline/25 bg-m3-surface-container text-m3-on-surface hover:bg-m3-surface-variant/40 text-xs font-bold rounded-xl transition cursor-pointer disabled:opacity-50"
+                      >
+                        <Bell size={12} />
+                        {notificationLoading ? 'Scheduling...' : 'Send Test Notification'}
+                      </button>
+                    )}
+                  </div>
                 )}
-              </div>
 
-              <button
-                onClick={() => signOutUser().catch((err) => console.error('Sign out error:', err))}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 bg-white text-slate-600 active:bg-slate-50 rounded-xl text-xs font-bold transition"
-              >
-                <LogOut size={14} />
-                Sign Out
-              </button>
+                {/* Data Management Panel */}
+                <div className="rounded-2xl border border-m3-outline/15 bg-m3-surface p-4 flex flex-col gap-3 shadow-3xs">
+                  <div>
+                    <h5 className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
+                      <Trash2 size={12} className="text-red-500" />
+                      Data Management
+                    </h5>
+                    <p className="text-xs text-m3-on-surface-variant mt-1.5 leading-relaxed">
+                      Permanently delete all tasks from your cloud database and this device.
+                    </p>
+                  </div>
 
-              {settingsMessage && (
-                <p className="text-xs text-emerald-700 font-medium">{settingsMessage}</p>
-              )}
-              {settingsError && (
-                <p className="text-xs text-rose-600 font-medium">{settingsError}</p>
-              )}
-            </motion.div>
-          </div>
+                  {!showClearConfirm ? (
+                    <button
+                      onClick={() => {
+                        setShowClearConfirm(true);
+                        setSettingsError(null);
+                        setSettingsMessage(null);
+                      }}
+                      className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-3 border border-red-500/35 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-xl text-xs font-bold transition cursor-pointer"
+                    >
+                      <Trash2 size={14} />
+                      Clear All Data
+                    </button>
+                  ) : (
+                    <div className="mt-2 rounded-xl border border-red-500/20 bg-red-500/5 p-3 flex flex-col gap-2">
+                      <p className="text-xs text-red-500 font-semibold">
+                        Delete all {tasks.length} tasks? This cannot be undone.
+                      </p>
+                      <div className="flex gap-2.5 mt-1">
+                        <button
+                          onClick={() => setShowClearConfirm(false)}
+                          disabled={clearDataLoading}
+                          className="flex-1 px-3 py-2 border border-m3-outline/25 bg-m3-surface hover:bg-m3-surface-variant/30 text-m3-on-surface text-xs font-bold rounded-lg transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleClearAllData}
+                          disabled={clearDataLoading}
+                          className="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition cursor-pointer disabled:opacity-50"
+                        >
+                          {clearDataLoading ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sign Out */}
+                <button
+                  onClick={() => signOutUser().catch((err) => console.error('Sign out error:', err))}
+                  className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 border border-m3-outline/25 bg-m3-surface hover:bg-m3-surface-variant/30 text-m3-on-surface text-xs font-bold rounded-xl transition cursor-pointer shadow-3xs"
+                >
+                  <LogOut size={14} />
+                  Sign Out Google Account
+                </button>
+
+                {settingsMessage && (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold text-center mt-1">{settingsMessage}</p>
+                )}
+                {settingsError && (
+                  <p className="text-xs text-red-500 font-semibold text-center mt-1">{settingsError}</p>
+                )}
+              </motion.div>
+            </div>
+          </>
         )}
       </AnimatePresence>
     </div>

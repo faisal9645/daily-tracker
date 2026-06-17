@@ -1,12 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
+  --font-display: "Outfit", sans-serif;
+
+  --color-m3-primary: var(--m3-primary);
+  --color-m3-on-primary: var(--m3-on-primary);
+  --color-m3-primary-container: var(--m3-primary-container);
+  --color-m3-on-primary-container: var(--m3-on-primary-container);
+  --color-m3-surface: var(--m3-surface);
+  --color-m3-on-surface: var(--m3-on-surface);
+  --color-m3-surface-variant: var(--m3-surface-variant);
+  --color-m3-on-surface-variant: var(--m3-on-surface-variant);
+  --color-m3-background: var(--m3-background);
+  --color-m3-on-background: var(--m3-on-background);
+  --color-m3-outline: var(--m3-outline);
+  --color-m3-secondary-container: var(--m3-secondary-container);
+  --color-m3-on-secondary-container: var(--m3-on-secondary-container);
+  --color-m3-surface-container: var(--m3-surface-container);
 }
 
-html {
+:root {
+  --m3-primary: #4f60a9;
+  --m3-on-primary: #ffffff;
+  --m3-primary-container: #dde1ff;
+  --m3-on-primary-container: #001453;
+  --m3-surface: #fdfbff;
+  --m3-on-surface: #1b1b1f;
+  --m3-surface-variant: #e1e2ec;
+  --m3-on-surface-variant: #44464f;
+  --m3-background: #fdfbff;
+  --m3-on-background: #1b1b1f;
+  --m3-outline: #74777f;
+  --m3-secondary-container: #e1e2ec;
+  --m3-on-secondary-container: #191a2c;
+  --m3-surface-container: #f3f3fa;
+  
+  --sb-track: transparent;
+  --sb-thumb: #c4c6d0;
+  --sb-size: 6px;
+}
+
+.dark {
+  --m3-primary: #bac3ff;
+  --m3-on-primary: #1e2c69;
+  --m3-primary-container: #364480;
+  --m3-on-primary-container: #dde1ff;
+  --m3-surface: #131317;
+  --m3-on-surface: #e3e1e6;
+  --m3-surface-variant: #44464f;
+  --m3-on-surface-variant: #c5c6d0;
+  --m3-background: #131317;
+  --m3-on-background: #e3e1e6;
+  --m3-outline: #8e9099;
+  --m3-secondary-container: #3f4052;
+  --m3-on-secondary-container: #dde1ff;
+  --m3-surface-container: #1b1b22;
+  
+  --sb-thumb: #44464f;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--m3-background);
+  color: var(--m3-on-background);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow: hidden; /* Prevent body scroll, use inner scroll instead */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -16,6 +79,166 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Custom Scrollbar for App UI */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--sb-size);
+  height: var(--sb-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--sb-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  border-radius: 99px;
+}
+
+/* Simulated Android Device styles (Desktop view) */
+.phone-emulator-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background: radial-gradient(circle at top, #1e293b, #0f172a);
+  padding: 2rem 1rem;
+}
+
+.phone-emulator {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  background: #000;
+  border-radius: 48px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+              0 0 0 10px #22252a,
+              0 0 0 12px #3c3f46,
+              0 0 20px 15px rgba(255, 255, 255, 0.05) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  transition: transform 0.3s ease;
+}
+
+/* Android Hardware Side Buttons */
+.phone-btn-power {
+  position: absolute;
+  right: -14px;
+  top: 180px;
+  width: 4px;
+  height: 60px;
+  background: #3c3f46;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 1px 0 2px rgba(0,0,0,0.5);
+  cursor: pointer;
+}
+.phone-btn-power:active {
+  right: -12px;
+}
+
+.phone-btn-volup {
+  position: absolute;
+  left: -14px;
+  top: 140px;
+  width: 4px;
+  height: 50px;
+  background: #3c3f46;
+  border-radius: 4px 0 0 4px;
+  box-shadow: -1px 0 2px rgba(0,0,0,0.5);
+  cursor: pointer;
+}
+.phone-btn-volup:active {
+  left: -12px;
+}
+
+.phone-btn-voldown {
+  position: absolute;
+  left: -14px;
+  top: 200px;
+  width: 4px;
+  height: 50px;
+  background: #3c3f46;
+  border-radius: 4px 0 0 4px;
+  box-shadow: -1px 0 2px rgba(0,0,0,0.5);
+  cursor: pointer;
+}
+.phone-btn-voldown:active {
+  left: -12px;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--m3-background);
+  border-radius: 38px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10;
+  border: 4px solid #000;
+}
+
+/* Status Bar & Notch */
+.phone-status-bar {
+  height: 38px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--m3-on-surface);
+  background: var(--m3-background);
+  z-index: 50;
+  user-select: none;
+}
+
+.phone-notch-container {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phone-camera-hole {
+  width: 12px;
+  height: 12px;
+  background: #101010;
+  border-radius: 50%;
+  border: 1.5px solid #222;
+  box-shadow: inset 0 0 3px rgba(255,255,255,0.2);
+}
+
+.phone-bottom-nav-bar {
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--m3-background);
+  padding-bottom: 6px;
+  z-index: 50;
+}
+
+.phone-gesture-pill {
+  width: 72px;
+  height: 4px;
+  background-color: var(--m3-on-surface);
+  opacity: 0.6;
+  border-radius: 2px;
+}
+
+/* Safe areas for mobile viewports */
 @media (max-width: 767px) {
   .mobile-safe-top {
     padding-top: max(env(safe-area-inset-top), 12px);
@@ -45,4 +268,25 @@ body {
   .mobile-safe-top {
     padding-top: 0;
   }
+}
+
+/* Custom transitions and states */
+.ripple-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.checkbox-animate:checked + div {
+  animation: checkbox-pop 0.2s ease-in-out;
+}
+
+@keyframes checkbox-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.bottom-sheet-overlay {
+  background-color: rgba(15, 17, 23, 0.4);
+  backdrop-filter: blur(2px);
 }

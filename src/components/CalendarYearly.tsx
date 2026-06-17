@@ -49,17 +49,17 @@ export default function CalendarYearly({
   const totalActiveDays = activeDaysSet.size;
 
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-3 sm:p-6 shadow-xs flex flex-col gap-4 sm:gap-6">
+    <div className="bg-m3-surface-container rounded-3xl border border-m3-surface-variant/30 p-3 sm:p-5 shadow-2xs flex flex-col gap-5">
       {/* Yearly Navigation Header */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-200 pb-4 sm:pb-5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-m3-outline/10">
         <div className="min-w-0">
-          <span className="text-[10px] uppercase font-bold tracking-widest text-blue-900 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-            Yearly Grid View
+          <span className="text-[10px] uppercase font-bold tracking-widest text-m3-primary bg-m3-primary-container px-3 py-1 rounded-full border border-m3-primary/20">
+            Yearly Grid
           </span>
-          <h2 className="text-xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight mt-1.5">
+          <h2 className="text-xl font-extrabold font-display text-m3-on-surface tracking-tight mt-2.5">
             Year of {selectedYear}
           </h2>
-          <p className="text-[11px] sm:text-xs text-slate-500 mt-1 hidden sm:block">
+          <p className="text-[11px] sm:text-xs text-m3-on-surface-variant font-semibold mt-1 hidden sm:block">
             Visual activity mapping of your yearly goals. Click any day to view daily tasks.
           </p>
         </div>
@@ -67,72 +67,72 @@ export default function CalendarYearly({
         <div className="flex items-center justify-center sm:justify-end gap-2">
           <button
             onClick={handlePrevYear}
-            className="touch-target p-2 border border-slate-200 rounded-lg text-slate-500 active:text-blue-900 active:bg-slate-50 transition shadow-2xs"
+            className="p-2 border border-m3-outline/20 rounded-full text-m3-on-surface-variant hover:bg-m3-surface-variant/30 transition shadow-3xs active:scale-95 cursor-pointer"
             title="Previous Year"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
-          <span className="font-display font-bold text-base sm:text-lg text-slate-800 px-3.5 py-1.5 bg-slate-50 rounded-lg border border-slate-200 min-w-[4.5rem] text-center">
+          <span className="font-display font-extrabold text-sm text-m3-on-surface px-4 py-1.5 bg-m3-surface rounded-full border border-m3-outline/20 min-w-[5rem] text-center select-none shadow-3xs">
             {selectedYear}
           </span>
           <button
             onClick={handleNextYear}
-            className="touch-target p-2 border border-slate-200 rounded-lg text-slate-500 active:text-blue-900 active:bg-slate-50 transition shadow-2xs"
+            className="p-2 border border-m3-outline/20 rounded-full text-m3-on-surface-variant hover:bg-m3-surface-variant/30 transition shadow-3xs active:scale-95 cursor-pointer"
             title="Next Year"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
       {/* Hero Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
-        <div className="bg-blue-50/50 border border-blue-100 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shadow-2xs col-span-2 md:col-span-1">
-          <div className="p-2 sm:p-3 bg-blue-900/10 text-blue-900 rounded-lg">
-            <Activity size={16} className="sm:w-[18px] sm:h-[18px]" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="bg-m3-surface border border-m3-outline/10 p-3 rounded-2xl flex items-center gap-3 shadow-3xs col-span-2 md:col-span-1">
+          <div className="p-2.5 bg-m3-primary/10 text-m3-primary rounded-xl shrink-0">
+            <Activity size={18} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Active Days</p>
-            <p className="text-lg sm:text-xl font-bold font-display text-blue-900 mt-0.5">{totalActiveDays}</p>
+            <p className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider">Active Days</p>
+            <p className="text-lg font-extrabold font-display text-m3-primary mt-0.5 leading-none">{totalActiveDays}</p>
           </div>
         </div>
 
-        <div className="bg-emerald-50/50 border border-emerald-100 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shadow-2xs">
-          <div className="p-2 sm:p-3 bg-emerald-600/10 text-emerald-700 rounded-lg">
-            <Award size={16} className="sm:w-[18px] sm:h-[18px]" />
+        <div className="bg-m3-surface border border-m3-outline/10 p-3 rounded-2xl flex items-center gap-3 shadow-3xs">
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
+            <Award size={18} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Completed</p>
-            <p className="text-lg sm:text-xl font-bold font-display text-emerald-700 mt-0.5">
+            <p className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider font-sans">Completion</p>
+            <p className="text-lg font-extrabold font-display text-emerald-650 mt-0.5 leading-none">
               {completedRatio}%
             </p>
           </div>
         </div>
 
-        <div className="bg-slate-50/70 border border-slate-100 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shadow-2xs">
-          <div className="p-2 sm:p-3 bg-slate-200/50 text-slate-700 rounded-lg">
-            <Calendar size={16} className="sm:w-[18px] sm:h-[18px]" />
+        <div className="bg-m3-surface border border-m3-outline/10 p-3 rounded-2xl flex items-center gap-3 shadow-3xs">
+          <div className="p-2.5 bg-m3-on-surface-variant/10 text-m3-on-surface-variant rounded-xl shrink-0">
+            <Calendar size={18} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tasks</p>
-            <p className="text-lg sm:text-xl font-bold font-display text-slate-800 mt-0.5">{totalYearTasks}</p>
+            <p className="text-[10px] font-bold text-m3-on-surface-variant uppercase tracking-wider">Total Tasks</p>
+            <p className="text-lg font-extrabold font-display text-m3-on-surface mt-0.5 leading-none">{totalYearTasks}</p>
           </div>
         </div>
       </div>
 
       {/* Grid Legend */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-xl p-2 sm:p-2.5">
-        <span className="font-medium text-[10px]">No Tasks</span>
-        <div className="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-205" title="No task entries" />
-        <div className="w-3.5 h-3.5 rounded bg-blue-50 border border-blue-200" title="Low task volume day" />
-        <div className="w-3.5 h-3.5 rounded bg-blue-300 border border-blue-400" title="Medium task volume day" />
-        <div className="w-3.5 h-3.5 rounded bg-blue-600 border border-blue-700" title="High task volume day" />
-        <div className="w-3.5 h-3.5 rounded bg-emerald-500 flex items-center justify-center text-[8px] text-white font-bold" title="Completed Day">✓</div>
-        <span className="font-medium text-[10px]">Fully Done</span>
+      <div className="flex flex-wrap items-center gap-2.5 text-xs text-m3-on-surface-variant bg-m3-surface border border-m3-outline/10 rounded-2xl p-2.5 shadow-3xs">
+        <span className="font-bold text-[9px] uppercase tracking-wider pl-1 shrink-0">Activity:</span>
+        <div className="w-3.5 h-3.5 rounded-md bg-m3-surface border border-m3-outline/15 shrink-0" title="No tasks" />
+        <div className="w-3.5 h-3.5 rounded-md bg-m3-primary/10 border border-m3-primary/20 shrink-0" title="Light activity" />
+        <div className="w-3.5 h-3.5 rounded-md bg-m3-primary/40 border border-m3-primary/50 shrink-0" title="Moderate activity" />
+        <div className="w-3.5 h-3.5 rounded-md bg-m3-primary border border-m3-primary/70 shrink-0" title="High activity" />
+        <div className="w-3.5 h-3.5 rounded-md bg-emerald-500 flex items-center justify-center text-[7px] text-white font-extrabold shrink-0" title="Fully Completed">✓</div>
+        <span className="font-bold text-[9px] uppercase tracking-wider shrink-0">Done</span>
       </div>
 
       {/* 12-Month Calendar Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {MONTHS.map((monthName, monthIndex) => {
           const monthDays = getDaysInMonth(selectedYear, monthIndex);
 
@@ -149,27 +149,29 @@ export default function CalendarYearly({
           return (
             <div
               key={monthName}
-              className="p-2.5 sm:p-4 rounded-xl border border-slate-200 active:border-blue-200 md:hover:border-blue-200 md:hover:shadow-xs transition duration-200 flex flex-col justify-between bg-white"
+              className="p-3 rounded-2xl border border-m3-outline/10 bg-m3-surface hover:border-m3-primary/25 hover:shadow-xs transition duration-200 flex flex-col justify-between"
             >
               {/* Month Selector Title */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 min-w-0 gap-2">
                 <button
                   onClick={() => onSelectMonth(monthIndex)}
-                  className="font-display font-bold text-sm text-slate-800 hover:text-blue-900 text-left transition focus:outline-hidden cursor-pointer"
+                  className="font-display font-extrabold text-sm text-m3-on-surface hover:text-m3-primary text-left transition cursor-pointer truncate shrink-0"
                 >
                   {monthName}
                 </button>
                 {totalInMonth > 0 && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${
-                    pct === 100 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'
+                  <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded-md shrink-0 border ${
+                    pct === 100
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                      : 'bg-m3-surface-container text-m3-on-surface-variant border-m3-outline/10'
                   }`}>
-                    {pct}% done
+                    {pct}%
                   </span>
                 )}
               </div>
 
               {/* Day dot matrix (Heatmap) */}
-              <div className="grid grid-cols-7 gap-1 flex-1">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 flex-1">
                 {monthDays.map((day) => {
                   const dateStr = formatDateString(day);
                   const dayTasks = yearTasks.filter((t) => t.date === dateStr);
@@ -179,16 +181,16 @@ export default function CalendarYearly({
                   const isFullyCompleted = total > 0 && completed === total;
 
                   // Define background styling matching intensity of tasks
-                  let bgStyling = 'bg-slate-50 border border-slate-205 text-slate-400';
+                  let bgStyling = 'bg-m3-surface border border-m3-outline/10 text-m3-on-surface-variant/40';
                   if (total > 0) {
                     if (isFullyCompleted) {
                       bgStyling = 'bg-emerald-500 text-white font-bold border border-emerald-600';
                     } else if (total >= 4) {
-                      bgStyling = 'bg-blue-600 text-white border border-blue-700 font-semibold';
+                      bgStyling = 'bg-m3-primary text-white border border-m3-primary/80 font-bold';
                     } else if (total >= 2) {
-                      bgStyling = 'bg-blue-300 text-blue-900 border border-blue-400 font-semibold';
+                      bgStyling = 'bg-m3-primary/40 text-m3-on-surface border border-m3-primary/30 font-semibold';
                     } else {
-                      bgStyling = 'bg-blue-50 text-blue-900 border border-blue-200 font-semibold';
+                      bgStyling = 'bg-m3-primary/10 text-m3-on-surface border border-m3-primary/20 font-semibold';
                     }
                   }
 
@@ -199,13 +201,13 @@ export default function CalendarYearly({
                         e.stopPropagation();
                         onSelectDay(dateStr);
                       }}
-                      className={`w-full aspect-square rounded-md flex items-center justify-center text-[8px] cursor-pointer hover:scale-115 transition duration-150 relative group ${bgStyling}`}
+                      className={`w-full aspect-square rounded-md flex items-center justify-center text-[8px] cursor-pointer hover:scale-110 active:scale-95 transition-all duration-150 relative group ${bgStyling}`}
                       title={`${dateStr}: ${completed}/${total} completed`}
                     >
                       {day.getDate()}
 
-                      {/* Cool floating tooltip on hover */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[9px] px-2 py-1 rounded shadow-md pointer-events-none whitespace-nowrap border border-slate-950 z-50">
+                      {/* Tooltip on hover */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block bg-slate-900 text-white text-[9px] px-2 py-1 rounded-lg shadow-md pointer-events-none whitespace-nowrap border border-slate-950 z-50">
                         {monthName.substring(0, 3)} {day.getDate()}: {total} tasks ({completed} done)
                       </div>
                     </div>
