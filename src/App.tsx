@@ -610,7 +610,7 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-m3-background flex items-center justify-center">
+      <div className="h-full w-full bg-m3-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-m3-on-surface">
           <RefreshCw size={32} className="animate-spin text-m3-primary" />
           <p className="text-sm font-semibold tracking-wide font-display">Loading Planflow...</p>
@@ -622,9 +622,9 @@ export default function App() {
   // Auth/Sign-in Screen
   if (!user) {
     return (
-      <div className="min-h-screen bg-m3-background text-m3-on-background font-sans antialiased flex items-center justify-center px-4 py-8 relative">
+      <div className="h-full w-full overflow-y-auto bg-m3-background text-m3-on-background font-sans antialiased flex items-center justify-center px-4 py-8 relative">
         <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-m3-primary/10 via-transparent to-transparent pointer-events-none -z-10" />
-        <div className="relative w-full max-w-md bg-m3-surface-container border border-m3-surface-variant/40 rounded-[32px] shadow-xl p-8 text-center">
+        <div className="relative w-full max-w-md bg-m3-surface-container border border-m3-surface-variant/40 rounded-[32px] shadow-xl p-8 text-center my-auto">
           <div className="w-16 h-16 rounded-[24px] bg-m3-primary flex items-center justify-center text-m3-on-primary shadow-lg mx-auto mb-6">
             <CalendarDays size={32} className="stroke-2" />
           </div>
@@ -819,7 +819,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col transition-all duration-200 bg-m3-background text-m3-on-background ${darkMode ? 'dark' : ''}`}>
+    <div className={`h-full w-full flex flex-col transition-all duration-200 bg-m3-background text-m3-on-background ${darkMode ? 'dark' : ''}`}>
       {/* 1. Android Phone Frame (Emulator Mode) */}
       {useDeviceFrame ? (
         <div className="flex-1 flex flex-col">
@@ -877,7 +877,7 @@ export default function App() {
         </div>
       ) : (
         // 2. Full-Screen Layout (Original desktop structure preserved, mobile layout on screens < 768px)
-        <div className="flex-1 flex flex-col overflow-hidden min-h-screen">
+        <div className="flex-1 flex flex-col overflow-hidden">
           
           {/* Desktop Sticky Header Navbar */}
           <header className="hidden md:block border-b border-m3-surface-variant/30 bg-m3-surface-container sticky top-0 z-40 shrink-0">
