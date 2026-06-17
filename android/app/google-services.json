@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "79791798391-3q2tuirhs7k9ju6j0ljrsv4qo6lkhdmp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.planflow.dailytracker",
+            "certificate_hash": "c519efef69b372de430613b07348db4588ebee25"
+          }
+        },
+        {
           "client_id": "79791798391-jckqlume88fvs51r6cr3vr6sbllnkqss.apps.googleusercontent.com",
           "client_type": 3
         }

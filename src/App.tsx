@@ -24,7 +24,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { collection, onSnapshot, setDoc, doc, deleteDoc, writeBatch, getDoc, getDocsFromServer } from 'firebase/firestore';
-import { auth, db, ensureGoogleProfilePhoto, getUserPhotoURL, isGoogleUser, signInWithGoogle, signOutUser, handleFirestoreError, OperationType } from './firebase';
+import { auth, db, ensureGoogleProfilePhoto, formatAuthError, getUserPhotoURL, GOOGLE_SIGNIN_SETUP_HINT, handleGoogleRedirectResult, isAndroidGoogleSignInMisconfigured, isGoogleUser, signInWithGoogle, signOutUser, handleFirestoreError, OperationType } from './firebase';
 import {
   getNotificationPermissionStatus,
   getScheduledReminderCount,
@@ -128,7 +128,12 @@ export default function App() {
 
   // Auth Status and Profile Registration Listener
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeAuth = () => {};
+
+    const initAuth = async () => {
+      await handleGoogleRedirectResult();
+
+      unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser && !isGoogleUser(firebaseUser)) {
         await signOutUser();
         setUser(null);
@@ -184,6 +189,9 @@ export default function App() {
         setAuthLoading(false);
       }
     });
+    };
+
+    void initAuth();
 
     return () => unsubscribeAuth();
   }, []);
@@ -405,20 +413,16 @@ export default function App() {
     try {
       await signInWithGoogle();
     } catch (err) {
-      const rawMessage = err instanceof Error ? err.message : 'Google sign-in failed.';
+      const rawMessage = formatAuthError(err);
       console.error('Auth sign-in error:', err);
 
-      const lower = rawMessage.toLowerCase();
-      if (
-        lower.includes('no credential') ||
-        (lower.includes('credential') && lower.includes('available')) ||
-        lower.includes('id token') ||
-        lower.includes('12500') ||
-        lower.includes('10:')
-      ) {
-        setAuthError(
-          'Google sign-in is not configured for this Android build yet. In Firebase Console, add your app SHA-1 fingerprint, download a new google-services.json, replace android/app/google-services.json, then rebuild the APK. Run: npm run android:sha',
-        );
+      if (rawMessage === 'REDIRECT_PENDING') {
+        setAuthError('Opening Google sign-in in your browser...');
+        return;
+      }
+
+      if (isAndroidGoogleSignInMisconfigured(err)) {
+        setAuthError(GOOGLE_SIGNIN_SETUP_HINT);
       } else {
         setAuthError(rawMessage);
       }

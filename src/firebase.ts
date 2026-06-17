@@ -8,6 +8,8 @@ import {
   indexedDBLocalPersistence,
   signInWithCredential,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   updateProfile,
   type Auth,
@@ -102,40 +104,94 @@ export async function ensureGoogleProfilePhoto(user: User): Promise<User> {
   return user;
 }
 
+export const ANDROID_DEBUG_SHA1 = 'C5:19:EF:EF:69:B3:72:DE:43:06:13:B0:73:48:DB:45:88:EB:EE:25';
+
+export const GOOGLE_SIGNIN_SETUP_HINT =
+  `Add this SHA-1 in Firebase Console (Project Settings → Android app → Add fingerprint), then download a new google-services.json:\n${ANDROID_DEBUG_SHA1}`;
+
+export function formatAuthError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return 'Google sign-in failed.';
+}
+
+export function isAndroidGoogleSignInMisconfigured(error: unknown): boolean {
+  const message = formatAuthError(error).toLowerCase();
+  return (
+    message.includes('no credential') ||
+    (message.includes('credential') && message.includes('available')) ||
+    message.includes('id token') ||
+    message.includes('native_no_id_token') ||
+    message.includes('12500') ||
+    message.includes('10:') ||
+    message.includes('developer_error')
+  );
+}
+
+export async function handleGoogleRedirectResult(): Promise<UserCredential | null> {
+  if (!isNativeApp) return null;
+
+  try {
+    return await getRedirectResult(auth);
+  } catch (error) {
+    console.error('Google redirect sign-in failed:', error);
+    return null;
+  }
+}
+
+async function signInWithGoogleNative() {
+  try {
+    return await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
+  } catch (legacyError) {
+    console.warn('Legacy Google sign-in failed, trying Credential Manager:', legacyError);
+    return FirebaseAuthentication.signInWithGoogle();
+  }
+}
+
 export async function signInWithGoogle(): Promise<UserCredential> {
   if (isNativeApp) {
-    let result;
-
     try {
-      result = await FirebaseAuthentication.signInWithGoogle();
-    } catch (credentialManagerError) {
-      console.warn('Credential Manager Google sign-in failed, retrying with account picker:', credentialManagerError);
-      result = await FirebaseAuthentication.signInWithGoogle({ useCredentialManager: false });
-    }
+      const result = await signInWithGoogleNative();
+      const idToken = result.credential?.idToken;
 
-    const idToken = result.credential?.idToken;
-
-    if (!idToken) {
-      throw new Error(
-        'Google sign-in did not return an ID token. Add your Android SHA-1 fingerprint in Firebase Console, download a new google-services.json, rebuild the APK, then try again.',
-      );
-    }
-
-    const credential = GoogleAuthProvider.credential(idToken);
-    const userCredential = await signInWithCredential(auth, credential);
-
-    if (result.user?.photoUrl || result.user?.displayName) {
-      await syncGoogleProfilePhoto(
-        userCredential.user,
-        result.user.photoUrl,
-        result.user.displayName,
-      );
-      if (auth.currentUser) {
-        return { ...userCredential, user: auth.currentUser };
+      if (!idToken) {
+        console.warn('Native Google sign-in returned no ID token, trying browser redirect');
+        await signInWithRedirect(auth, googleProvider);
+        throw new Error('REDIRECT_PENDING');
       }
-    }
 
-    return userCredential;
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+
+      if (result.user?.photoUrl || result.user?.displayName) {
+        await syncGoogleProfilePhoto(
+          userCredential.user,
+          result.user.photoUrl,
+          result.user.displayName,
+        );
+        if (auth.currentUser) {
+          return { ...userCredential, user: auth.currentUser };
+        }
+      }
+
+      return userCredential;
+    } catch (nativeError) {
+      const nativeMessage = formatAuthError(nativeError);
+      if (nativeMessage === 'REDIRECT_PENDING') {
+        throw nativeError;
+      }
+
+      console.warn('Native Google sign-in failed, trying browser redirect:', nativeError);
+      await signInWithRedirect(auth, googleProvider);
+      throw new Error('REDIRECT_PENDING');
+    }
   }
 
   return signInWithPopup(auth, googleProvider);
