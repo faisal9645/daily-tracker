@@ -43,6 +43,9 @@ import {
   type NotificationPermissionStatus,
 } from './services/notifications';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+
+const isNativeApp = Capacitor.isNativePlatform();
 
 const TASK_STORAGE_KEY = 'calendar_task_tracker_item_v4';
 const LOCAL_IMPORT_DONE_KEY = 'planflow_local_import_done';
@@ -66,6 +69,10 @@ export default function App() {
 
   // Emulator display toggle (defaults to false for original desktop layout)
   const [useDeviceFrame, setUseDeviceFrame] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isNativeApp) setUseDeviceFrame(false);
+  }, []);
 
   // Quick Add Overlay modal state
   const [quickAddDate, setQuickAddDate] = useState<string | null>(null);
@@ -657,7 +664,7 @@ export default function App() {
 
   // App Layout Helper Component (Mobile format)
   const MobileAppBody = () => (
-    <div className="flex-1 flex flex-col overflow-hidden relative">
+    <div className="app-shell flex-1 min-h-0 relative">
       {/* Top App Bar (M3 style) */}
       <header className="mobile-safe-top border-b border-m3-surface-variant/30 bg-m3-surface-container px-5 py-3 flex items-center justify-between z-45 shrink-0">
         <div className="flex items-center gap-3">
@@ -707,7 +714,7 @@ export default function App() {
       </header>
 
       {/* Main View Area */}
-      <main className="flex-1 overflow-y-auto px-4 py-4 bg-m3-background pb-24">
+      <main className="app-scroll mobile-page px-4 py-4 bg-m3-background">
         <TaskStats
           tasks={tasks}
           activeFilter={activeFilter}
@@ -721,9 +728,9 @@ export default function App() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
-              initial={{ opacity: 0, y: 15 }}
+              initial={isNativeApp ? false : { opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
+              exit={isNativeApp ? undefined : { opacity: 0, y: -15 }}
               transition={{ duration: 0.2 }}
             >
               {currentView === 'daily' && (
@@ -767,15 +774,16 @@ export default function App() {
 
       {/* FAB (Floating Action Button) for Mobile */}
       <button
+        type="button"
         onClick={() => setQuickAddDate(formatDateString(selectedDate))}
-        className="fixed bottom-24 right-5 z-40 w-14 h-14 bg-m3-primary-container text-m3-on-primary-container active:scale-95 active:bg-m3-primary hover:shadow-xl rounded-[20px] flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer"
+        className="absolute bottom-24 right-5 z-[90] w-14 h-14 bg-m3-primary-container text-m3-on-primary-container active:scale-95 active:bg-m3-primary hover:shadow-xl rounded-[20px] flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer touch-target"
         title="Add new task"
       >
         <Plus size={28} className="stroke-[2.5]" />
       </button>
 
       {/* Mobile M3 Bottom Navbar */}
-      <nav className="absolute bottom-0 inset-x-0 z-40 border-t border-m3-surface-variant/30 bg-m3-surface-container px-4 py-2 flex items-center justify-around shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <nav className="absolute bottom-0 inset-x-0 z-[100] border-t border-m3-surface-variant/30 bg-m3-surface-container px-4 py-2 flex items-center justify-around shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] mobile-safe-bottom">
         {[
           { view: 'daily', label: 'Daily', icon: <FileCheck2 size={20} /> },
           { view: 'monthly', label: 'Monthly', icon: <Calendar size={20} /> },
@@ -785,8 +793,9 @@ export default function App() {
           return (
             <button
               key={item.view}
+              type="button"
               onClick={() => setCurrentView(item.view as CalendarView)}
-              className="flex flex-col items-center justify-center gap-0.5 py-1 w-20 relative cursor-pointer"
+              className="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1 w-20 relative touch-target"
             >
               <div
                 className={`flex items-center justify-center px-5 py-1.5 rounded-full transition-all duration-200 ${
@@ -819,7 +828,7 @@ export default function App() {
   };
 
   return (
-    <div className={`h-full w-full flex flex-col transition-all duration-200 bg-m3-background text-m3-on-background ${darkMode ? 'dark' : ''}`}>
+    <div className={`app-shell transition-all duration-200 bg-m3-background text-m3-on-background ${darkMode ? 'dark' : ''}`}>
       {/* 1. Android Phone Frame (Emulator Mode) */}
       {useDeviceFrame ? (
         <div className="flex-1 flex flex-col">
@@ -877,7 +886,7 @@ export default function App() {
         </div>
       ) : (
         // 2. Full-Screen Layout (Original desktop structure preserved, mobile layout on screens < 768px)
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="app-shell flex-1 min-h-0">
           
           {/* Desktop Sticky Header Navbar */}
           <header className="hidden md:block border-b border-m3-surface-variant/30 bg-m3-surface-container sticky top-0 z-40 shrink-0">
@@ -966,74 +975,73 @@ export default function App() {
             <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-200 font-bold text-xs whitespace-nowrap pl-0">Phone Mode</span>
           </button>
 
-          {/* Main page content wrapper - responsive (scrollable on desktop, full scroll on mobile) */}
-          <div className="flex-1 overflow-y-auto flex flex-col">
-            
-            {/* Mobile Header (Rendered on mobile viewport screen widths < 768px) */}
-            <header className="md:hidden mobile-safe-top border-b border-m3-surface-variant/30 bg-m3-surface-container px-5 py-3 flex items-center justify-between z-40 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-m3-primary flex items-center justify-center text-m3-on-primary shadow-xs">
-                  <CalendarDays size={20} className="stroke-2" />
-                </div>
-                <div>
-                  <h1 className="font-display font-extrabold text-base text-m3-on-surface leading-tight">Planflow</h1>
-                  <p className="text-[10px] text-m3-on-surface-variant font-bold uppercase tracking-wider">
-                    {currentView === 'daily' ? 'Daily Tasks' : currentView === 'monthly' ? 'Monthly Calendar' : 'Yearly Activity'}
-                  </p>
-                </div>
+          {/* Mobile Header (fixed above scroll area on small screens) */}
+          <header className="md:hidden mobile-safe-top border-b border-m3-surface-variant/30 bg-m3-surface-container px-5 py-3 flex items-center justify-between z-40 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-m3-primary flex items-center justify-center text-m3-on-primary shadow-xs">
+                <CalendarDays size={20} className="stroke-2" />
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer"
-                >
-                  {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
-                <button
-                  onClick={() => {
-                    setSettingsOpen(true);
-                    setShowClearConfirm(false);
-                    setSettingsError(null);
-                    setSettingsMessage(null);
-                  }}
-                  className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer"
-                >
-                  <Settings size={18} />
-                </button>
-                <UserAvatar
-                  user={user}
-                  fallbackPhotoURL={profilePhotoURL}
-                  size="sm"
-                  onClick={() => {
-                    setSettingsOpen(true);
-                    setShowClearConfirm(false);
-                    setSettingsError(null);
-                    setSettingsMessage(null);
-                  }}
-                />
+              <div>
+                <h1 className="font-display font-extrabold text-base text-m3-on-surface leading-tight">Planflow</h1>
+                <p className="text-[10px] text-m3-on-surface-variant font-bold uppercase tracking-wider">
+                  {currentView === 'daily' ? 'Daily Tasks' : currentView === 'monthly' ? 'Monthly Calendar' : 'Yearly Activity'}
+                </p>
               </div>
-            </header>
-
-            {/* Dashboard Content Container */}
-            <main className="flex-1 max-w-7xl mx-auto px-4 py-6 w-full pb-24 md:pb-12">
-              <TaskStats
-                tasks={tasks}
-                activeFilter={activeFilter}
-                onQuickFilterClick={(status) => {
-                  setActiveFilter(status);
-                  setCurrentView('daily');
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer touch-target"
+              >
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSettingsOpen(true);
+                  setShowClearConfirm(false);
+                  setSettingsError(null);
+                  setSettingsMessage(null);
+                }}
+                className="p-2 rounded-full hover:bg-m3-surface-variant/30 text-m3-on-surface cursor-pointer touch-target"
+              >
+                <Settings size={18} />
+              </button>
+              <UserAvatar
+                user={user}
+                fallbackPhotoURL={profilePhotoURL}
+                size="sm"
+                onClick={() => {
+                  setSettingsOpen(true);
+                  setShowClearConfirm(false);
+                  setSettingsError(null);
+                  setSettingsMessage(null);
                 }}
               />
+            </div>
+          </header>
 
-              <div className="mt-4">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentView}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.2 }}
-                  >
+          {/* Scrollable main content */}
+          <main className="app-scroll flex-1 min-h-0 max-w-7xl mx-auto px-4 py-6 w-full mobile-page md:pb-12">
+            <TaskStats
+              tasks={tasks}
+              activeFilter={activeFilter}
+              onQuickFilterClick={(status) => {
+                setActiveFilter(status);
+                setCurrentView('daily');
+              }}
+            />
+
+            <div className="mt-4">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentView}
+                  initial={isNativeApp ? false : { opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={isNativeApp ? undefined : { opacity: 0, y: -15 }}
+                  transition={{ duration: 0.2 }}
+                >
                     {currentView === 'daily' && (
                       <CalendarDaily
                         currentDate={selectedDate}
@@ -1071,31 +1079,33 @@ export default function App() {
                   </motion.div>
                 </AnimatePresence>
               </div>
-            </main>
+          </main>
 
-            {/* Floating Action Button (FAB) - Mobile only */}
-            <button
-              onClick={() => setQuickAddDate(formatDateString(selectedDate))}
-              className="md:hidden fixed bottom-24 right-5 z-40 w-14 h-14 bg-m3-primary-container text-m3-on-primary-container rounded-[20px] flex items-center justify-center shadow-lg active:scale-95 transition-all duration-200 cursor-pointer"
-              title="Add new task"
-            >
-              <Plus size={28} className="stroke-[2.5]" />
-            </button>
+          {/* Floating Action Button (FAB) - Mobile only */}
+          <button
+            type="button"
+            onClick={() => setQuickAddDate(formatDateString(selectedDate))}
+            className="md:hidden fixed bottom-24 right-5 z-[90] w-14 h-14 bg-m3-primary-container text-m3-on-primary-container rounded-[20px] flex items-center justify-center shadow-lg active:scale-95 transition-all duration-200 cursor-pointer touch-target"
+            title="Add new task"
+          >
+            <Plus size={28} className="stroke-[2.5]" />
+          </button>
 
-            {/* Mobile bottom navbar (Mobile screen widths < 768px only) */}
-            <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-m3-surface-variant/30 bg-m3-surface-container px-4 py-2 flex items-center justify-around shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-              {[
-                { view: 'daily', label: 'Daily', icon: <FileCheck2 size={20} /> },
-                { view: 'monthly', label: 'Monthly', icon: <Calendar size={20} /> },
-                { view: 'yearly', label: 'Yearly', icon: <CalendarDays size={20} /> }
-              ].map((item) => {
-                const isActive = currentView === item.view;
-                return (
-                  <button
-                    key={item.view}
-                    onClick={() => setCurrentView(item.view as CalendarView)}
-                    className="flex flex-col items-center justify-center gap-0.5 py-1 w-20 relative cursor-pointer"
-                  >
+          {/* Mobile bottom navbar (Mobile screen widths < 768px only) */}
+          <nav className="md:hidden mobile-bottom-nav border-t border-m3-surface-variant/30 bg-m3-surface-container px-4 py-2 flex items-center justify-around shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            {[
+              { view: 'daily', label: 'Daily', icon: <FileCheck2 size={20} /> },
+              { view: 'monthly', label: 'Monthly', icon: <Calendar size={20} /> },
+              { view: 'yearly', label: 'Yearly', icon: <CalendarDays size={20} /> }
+            ].map((item) => {
+              const isActive = currentView === item.view;
+              return (
+                <button
+                  key={item.view}
+                  type="button"
+                  onClick={() => setCurrentView(item.view as CalendarView)}
+                  className="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1 w-20 relative touch-target"
+                >
                     <div
                       className={`flex items-center justify-center px-5 py-1.5 rounded-full transition-all duration-200 ${
                         isActive
@@ -1113,18 +1123,16 @@ export default function App() {
               })}
             </nav>
 
-            {/* Desktop footer (Desktop only) */}
-            <footer className="hidden md:block border-t border-m3-outline/10 bg-m3-surface-container/20 py-8 mt-12">
-              <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-m3-on-surface-variant/80 font-semibold select-none">
-                <p>&copy; 2026 Planflow Task & Calendar Manager. Handcrafted offline-first workspace tool.</p>
-                <span className="flex items-center gap-1">
-                  <Info size={12} className="text-m3-primary" />
-                  Interactive clicking enabled on all calendar elements
-                </span>
-              </div>
-            </footer>
-
-          </div>
+          {/* Desktop footer (Desktop only) */}
+          <footer className="hidden md:block border-t border-m3-outline/10 bg-m3-surface-container/20 py-8 mt-12 shrink-0">
+            <div className="max-w-7xl mx-auto px-6 flex items-center justify-between text-xs text-m3-on-surface-variant/80 font-semibold select-none">
+              <p>&copy; 2026 Planflow Task & Calendar Manager. Handcrafted offline-first workspace tool.</p>
+              <span className="flex items-center gap-1">
+                <Info size={12} className="text-m3-primary" />
+                Interactive clicking enabled on all calendar elements
+              </span>
+            </div>
+          </footer>
         </div>
       )}
 

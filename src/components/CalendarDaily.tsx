@@ -614,41 +614,53 @@ export default function CalendarDaily({
           </div>
 
           {/* Quick Filters */}
-          <div className="flex flex-col gap-2 text-xs">
-            {/* Category selection pill */}
-            <div className="flex items-center gap-1 bg-m3-surface/70 border border-m3-outline/10 p-1 rounded-2xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <span className="text-[9px] font-extrabold text-m3-on-surface-variant px-2.5 uppercase shrink-0">Cat:</span>
-              {['All', ...Object.keys(DEFAULT_CATEGORIES)].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-xl font-bold text-xs transition cursor-pointer shrink-0 ${
-                    selectedCategory === cat
-                      ? 'bg-m3-primary text-white font-extrabold shadow-3xs'
-                      : 'text-m3-on-surface-variant hover:bg-m3-surface/90 hover:text-m3-on-surface'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+          <div className="flex flex-col gap-3 text-xs">
+            {/* Category selection row */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-extrabold text-m3-on-surface-variant uppercase tracking-wider w-16 shrink-0 text-right select-none">Cat:</span>
+              <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-fade-mask py-0.5">
+                {['All', ...Object.keys(DEFAULT_CATEGORIES)].map((cat) => {
+                  const isActive = selectedCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all active:scale-95 cursor-pointer shrink-0 border flex items-center gap-1.5 select-none ${
+                        isActive
+                          ? 'bg-m3-primary border-m3-primary text-white font-extrabold shadow-3xs'
+                          : 'bg-m3-surface border-m3-outline/15 text-m3-on-surface-variant hover:bg-m3-surface-variant/20 hover:text-m3-on-surface'
+                      }`}
+                    >
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                      <span>{cat}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Priority selection pill */}
-            <div className="flex items-center gap-1 bg-m3-surface/70 border border-m3-outline/10 p-1 rounded-2xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <span className="text-[9px] font-extrabold text-m3-on-surface-variant px-2.5 uppercase shrink-0">Urgency:</span>
-              {['All', 'low', 'medium', 'high'].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setSelectedPriority(p)}
-                  className={`px-3 py-1 rounded-xl font-bold text-xs transition cursor-pointer capitalize shrink-0 ${
-                    selectedPriority === p
-                      ? 'bg-m3-primary text-white font-extrabold shadow-3xs'
-                      : 'text-m3-on-surface-variant hover:bg-m3-surface/90 hover:text-m3-on-surface'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+            {/* Priority selection row */}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-extrabold text-m3-on-surface-variant uppercase tracking-wider w-16 shrink-0 text-right select-none">Urgency:</span>
+              <div className="flex-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-fade-mask py-0.5">
+                {['All', 'low', 'medium', 'high'].map((p) => {
+                  const isActive = selectedPriority === p;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setSelectedPriority(p)}
+                      className={`px-3 py-1.5 rounded-full font-bold text-xs transition-all active:scale-95 cursor-pointer capitalize shrink-0 border flex items-center gap-1.5 select-none ${
+                        isActive
+                          ? 'bg-m3-primary border-m3-primary text-white font-extrabold shadow-3xs'
+                          : 'bg-m3-surface border-m3-outline/15 text-m3-on-surface-variant hover:bg-m3-surface-variant/20 hover:text-m3-on-surface'
+                      }`}
+                    >
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+                      <span>{p}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
