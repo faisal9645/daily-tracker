@@ -7,7 +7,7 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:79791798391:android:planflowdailytracker",
+        "mobilesdk_app_id": "1:79791798391:android:10e54c7c6db5faeeb4ee72",
         "android_client_info": {
           "package_name": "com.planflow.dailytracker"
         }
@@ -20,7 +20,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyB3_hEB23Kerud8ldQi1pYtbteovZnd9So"
+          "current_key": "AIzaSyA_E_A-xAuj_wAMYtMmh7zqfJ85yH51f-E"
         }
       ],
       "services": {
